@@ -1,18 +1,139 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A1: Holiday Chase</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 820px; margin: 0 auto; padding: 24px 16px 64px; line-height: 1.6; color: #222; background: #fff; }
+  h1 { margin-bottom: 0; }
+  .sub { color: #666; margin-top: 4px; }
+  h2 { margin-top: 48px; border-bottom: 2px solid #eee; padding-bottom: 4px; }
+  figure { margin: 24px 0; }
+  figure img { width: 100%; height: auto; border: 1px solid #ddd; border-radius: 6px; }
+  figcaption { font-size: 0.95em; color: #444; margin-top: 8px; }
+  pre { background: #f6f8fa; border: 1px solid #ddd; border-radius: 6px; padding: 16px; overflow-x: auto; font-size: 0.85em; line-height: 1.45; }
+  table { border-collapse: collapse; margin: 16px 0; }
+  th, td { border: 1px solid #ddd; padding: 6px 12px; text-align: left; }
+  th { background: #f6f8fa; }
+  .todo { background: #fff3cd; padding: 2px 6px; border-radius: 4px; }
+  a { color: #1f4e79; }
+</style>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to home</a></p>
+<h1>Assignment 1: Holiday Chase</h1>
+<p class="sub">HCDE 439 Physical Computing</p>
 
-    <title>Annie Lam's HCDE 439 Physical Computing Page!</title>
+<p>For our holiday light company's new pattern, I made a <strong>Holiday Chase</strong>: the light runs red &rarr; green &rarr; yellow down the string, then red and yellow flash together as an accent, everything goes dark for a beat, and the pattern repeats. Each step lasts 250&nbsp;ms, so one full cycle takes 1.5 seconds. The chase gives the string a sense of motion, and the red-and-yellow accent adds a warm &ldquo;sparkle&rdquo; at the end of every run.</p>
 
-    <link href="style.css" rel="stylesheet" type="text/css" />
-  </head>
-  <body>
-    <h1>Annie Lam's Assignment 1!</h1>
-    <div class="header">
-      <img src="a1_cover_img.jpeg" />
-      <p>Here is all the documentation for assignment 1!</p>
-    </div>
-  </body>
+<h2>Schematic</h2>
+<figure>
+  <img src="A1_schematics.jpg" alt="Schematic: Arduino pins D9, D10 and D11 each connect through a 220 ohm resistor to the anode of a red, green and yellow LED; all LED cathodes connect to GND.">
+  <figcaption>Each LED gets its own digital pin (D9 red, D10 green, D11 yellow) so the Arduino can switch them independently. Current flows out of the pin, through a 220&nbsp;&Omega; current-limiting resistor, through the LED from anode (+, long leg) to cathode (&minus;, short leg, flat side), and back to the Arduino's GND. With a 20&nbsp;mA maximum, each LED needs at least 150&nbsp;&Omega;; I used 220&nbsp;&Omega;, which keeps each LED at about 13&nbsp;mA: bright, but safely under the LED's and the Arduino pin's 20&nbsp;mA limits (see calculation below).</figcaption>
+</figure>
+
+<h2>Resistor calculation</h2>
+<p>Using Ohm's law, the resistor has to drop whatever voltage the LED doesn't use:</p>
+<p style="text-align:center"><strong>R = (V<sub>supply</sub> &minus; V<sub>f</sub>) / I</strong></p>
+<p>The Arduino Uno's pins output 5&nbsp;V. Typical forward voltages for standard 5&nbsp;mm LEDs are about 2.0&nbsp;V (red), 2.1&nbsp;V (yellow) and 2.2&nbsp;V (green). I used <strong>20&nbsp;mA</strong> as my current, because that's the maximum continuous current for a standard 5&nbsp;mm LED and the recommended maximum for an Arduino pin. Plugging it in gives the <em>smallest</em> resistor that keeps the LED at or under 20&nbsp;mA. The red LED has the lowest forward voltage, so it needs the biggest resistor and sets the requirement for all three:</p>
+<p style="text-align:center">R<sub>min</sub> = (5&nbsp;V &minus; 2.0&nbsp;V) / 0.020&nbsp;A = <strong>150&nbsp;&Omega;</strong></p>
+<p>Any resistor of 150&nbsp;&Omega; or more is safe, since more resistance means less current. I used <strong>220&nbsp;&Omega;</strong>, the standard value in my kit. It's above the minimum, so the LEDs stay a bit under 20&nbsp;mA, which gives a safety margin for parts that vary from their typical values while still being plenty bright. Checking the actual current with 220&nbsp;&Omega;:</p>
+<table>
+  <tr><th>LED</th><th>V<sub>f</sub></th><th>Current = (5 &minus; V<sub>f</sub>) / 220&nbsp;&Omega;</th></tr>
+  <tr><td>Red</td><td>2.0 V</td><td>3.0 / 220 = <strong>13.6 mA</strong></td></tr>
+  <tr><td>Yellow</td><td>2.1 V</td><td>2.9 / 220 = <strong>13.2 mA</strong></td></tr>
+  <tr><td>Green</td><td>2.2 V</td><td>2.8 / 220 = <strong>12.7 mA</strong></td></tr>
+</table>
+<p>With all three lit at once the board supplies about 39.5&nbsp;mA total, well within its limits.</p>
+
+<h2>Circuit</h2>
+<figure>
+  <img src="circuit.jpg" alt="Overhead photo of an Elegoo Uno R3 wired to a breadboard with a red, a green and a yellow LED, each with its own resistor">
+  <figcaption>My circuit on an Elegoo Uno R3 (an Arduino Uno clone). Pin D9 drives the red LED, D10 the green LED and D11 the yellow LED. Each signal wire runs to its own 220&nbsp;&Omega; resistor, which feeds the LED's long leg (anode), and each LED's short leg (cathode) is jumpered to the breadboard's ground rail, which is wired back to the Arduino's GND pin. Giving every LED its own pin and its own resistor is what lets the code control each one separately at a safe current.</figcaption>
+</figure>
+
+<h2>Firmware</h2>
+<p>The sketch steps through the pattern with <code>digitalWrite()</code> and <code>delay()</code>. Because every LED has its own pin, the code can turn each one on or off on its own: one at a time for the chase, or two at once for the accent flash. Changing the single <code>WAIT</code> value speeds up or slows down the whole pattern.</p>
+<pre><code>// Pin number for the red LED
+const int RED_LED = 9;
+// Pin number for the green LED
+const int GREEN_LED = 10;
+// Pin number for the yellow LED
+const int YELLOW_LED = 11;
+// How long (in milliseconds) each step of the pattern lasts
+const int WAIT = 250;
+
+// setup() runs once when the Arduino powers on or resets
+void setup() {
+  // Set the red LED pin as an output so it can supply current
+  pinMode(RED_LED, OUTPUT);
+  // Set the green LED pin as an output so it can supply current
+  pinMode(GREEN_LED, OUTPUT);
+  // Set the yellow LED pin as an output so it can supply current
+  pinMode(YELLOW_LED, OUTPUT);
+}
+
+// loop() runs over and over forever after setup() finishes
+void loop() {
+  // Turn the red LED on
+  digitalWrite(RED_LED, HIGH);
+  // Hold for one step
+  delay(WAIT);
+  // Turn the red LED off
+  digitalWrite(RED_LED, LOW);
+  // Turn the green LED on
+  digitalWrite(GREEN_LED, HIGH);
+  // Hold for one step
+  delay(WAIT);
+  // Turn the green LED off
+  digitalWrite(GREEN_LED, LOW);
+  // Turn the yellow LED on
+  digitalWrite(YELLOW_LED, HIGH);
+  // Hold for one step
+  delay(WAIT);
+  // Turn the yellow LED off
+  digitalWrite(YELLOW_LED, LOW);
+  // Turn the red and yellow LEDs on together for a &quot;flash&quot; accent
+  digitalWrite(RED_LED, HIGH);
+  // Yellow joins red for the accent
+  digitalWrite(YELLOW_LED, HIGH);
+  // Hold the accent for two steps
+  delay(WAIT * 2);
+  // Turn the red LED off to end the accent
+  digitalWrite(RED_LED, LOW);
+  // Turn the yellow LED off to end the accent
+  digitalWrite(YELLOW_LED, LOW);
+  // Pause with everything dark before the pattern repeats
+  delay(WAIT);
+}
+</code></pre>
+
+<h2>Circuit in action</h2>
+<figure>
+  <img src="twinkle.gif" alt="Animated GIF of the red, green and yellow LEDs running the Holiday Chase pattern">
+  <figcaption>My circuit running the Holiday Chase firmware: red, green and yellow light in turn, then red and yellow flash together before a short dark pause.</figcaption>
+</figure>
+
+<h2>Questions</h2>
+
+<h3>1. Voltage across the LEDs over time</h3>
+<figure>
+  <img src="voltage_graph.png" alt="Three square-wave graphs of voltage versus time for the red, green and yellow LEDs over 3 seconds">
+  <figcaption>Each LED's voltage is a square wave taken from the timings in my code (WAIT = 250&nbsp;ms, 1.5&nbsp;s per cycle). When its pin is LOW the LED sees 0&nbsp;V. When the pin goes HIGH (5&nbsp;V), the voltage across the LED jumps to its forward voltage (about 2.0&nbsp;V red, 2.2&nbsp;V green, 2.1&nbsp;V yellow), and the remaining ~3&nbsp;V drops across the 220&nbsp;&Omega; resistor. Red is on for the first step and again during the accent; green is on only for the second step; yellow comes on for the third step and stays on through the accent, because the code switches it off and straight back on with no delay in between. Every LED is off for the final 250&nbsp;ms pause.</figcaption>
+</figure>
+
+<h3>2. How many LEDs could you blink independently, and how much current would that draw?</h3>
+<p>The Arduino Uno has 14 digital pins (D0&ndash;D13) plus 6 analog pins (A0&ndash;A5) that can also be used as digital outputs, so <strong>20 LEDs</strong> can each have their own pin. (D0 and D1 are shared with USB serial, so if you need the Serial Monitor that drops to 18.)</p>
+<p>The ATmega328P chip can safely handle: its datasheet limits the total current through the chip's VCC and GND pins to 200&nbsp;mA (and 40&nbsp;mA absolute maximum per pin). At my ~13.2&nbsp;mA average per LED, 20 LEDs lit at once would draw about <strong>20 &times; 13.2&nbsp;mA &asymp; 265&nbsp;mA</strong>.  To run all 20 safely you'd need larger resistors, e.g. 330&nbsp;&Omega; gives about 9&nbsp;mA each, or 180&nbsp;mA total. </p>
+
+<h3>3. How fast do the LEDs need to blink before they look steady?</h3>
+<p>This is called the <em>flicker fusion threshold</em>. For most people it sits somewhere around 50&ndash;60 flashes per second in a typical indoor setting, and it varies with brightness, where the light falls in your field of vision (peripheral vision catches flicker more easily), and from person to person.</p>
+<p>To test my own eyes, I wrote a small test sketch that blinks the red LED with equal on and off times that I could change by typing a number into the Serial Monitor, and I kept shrinking the time until the LED stopped looking like it was blinking. One full blink is on + off, so blinks per second = 1000 / (on + off).
+At 10&nbsp;ms on / 10&nbsp;ms off (50 blinks per second) I could barely see flickering, but at 8&nbsp;ms on / 8&nbsp;ms off (about 62 blinks per second) the LED was completely steady. So my own flicker fusion threshold is somewhere between 50 and 62 flashes per second.</p>
+
+<h3>4. Did you use AI tools?</h3>
+<p>I used AI to help me write in html and look up voltage information for this kit. Additionally to check grammar, syntax, and debug.</p>
+
+</body>
 </html>
