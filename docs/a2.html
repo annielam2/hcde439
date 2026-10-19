@@ -1,18 +1,165 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A2: Firefly Jar</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 820px; margin: 0 auto; padding: 24px 16px 64px; line-height: 1.6; color: #222; background: #fff; }
+  h1 { margin-bottom: 0; }
+  .sub { color: #666; margin-top: 4px; }
+  h2 { margin-top: 48px; border-bottom: 2px solid #eee; padding-bottom: 4px; }
+  figure { margin: 24px 0; }
+  figure img { width: 100%; height: auto; border: 1px solid #ddd; border-radius: 6px; }
+  figcaption { font-size: 0.95em; color: #444; margin-top: 8px; }
+  pre { background: #f6f8fa; border: 1px solid #ddd; border-radius: 6px; padding: 16px; overflow-x: auto; font-size: 0.85em; line-height: 1.45; }
+  table { border-collapse: collapse; margin: 16px 0; }
+  th, td { border: 1px solid #ddd; padding: 6px 12px; text-align: left; }
+  th { background: #f6f8fa; }
+  .eq { text-align: center; }
+  .todo { background: #fff3cd; border: 1px dashed #d4a300; padding: 12px 16px; border-radius: 6px; }
+  a { color: #1f4e79; }
+</style>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to home</a></p>
+<h1>Assignment 2: Firefly Jar</h1>
+<p class="sub">HCDE 439 Physical Computing &middot; a light-up toy prototype</p>
 
-    <title>Example Student's HCDE 439 Physical Computing Page!</title>
+<p>For our toy company's new light-up toy, I prototyped a <strong>Firefly Jar</strong>, a nightlight toy for kids. The jar stays dark until a kid presses and holds the button on the lid. Then the fireflies wake up: the red and green fireflies glow steadily, and the yellow firefly pulses, slowly fading from off to full brightness and back, like a firefly blinking in a jar. When the button is let go, the jar goes dark again after the yellow firefly finishes its last pulse.</p>
 
-    <link href="style.css" rel="stylesheet" type="text/css" />
-  </head>
-  <body>
-    <h1>Example Student's Assignment 2!</h1>
-    <div class="header">
-      <img src="red-panda.jpg" />
-      <p>Here is all the documentation for assignment 2!</p>
-    </div>
-  </body>
+<h2>Schematic</h2>
+<figure>
+  <img src="a2_schematic_hand.jpg" alt="Hand-drawn schematic: Arduino pins D9, D10 and D11 each connect through a 220 ohm resistor to a red, green and yellow LED whose cathodes go to GND. A push button connects 5V to pin D2, and a 10 kilohm pull-down resistor connects D2 to GND.">
+  <figcaption>Each LED is on its own PWM-capable pin (D9 red, D10 green, D11 yellow), so the code can switch any of them fully on or off with <code>digitalWrite()</code>, and it can also dim the yellow LED with <code>analogWrite()</code>. Current flows out of each pin, through a 220&nbsp;&Omega; current-limiting resistor, through the LED from anode to cathode, and back to GND. The 220&nbsp;&Omega; value keeps each LED at about 13&nbsp;mA, safely under the 20&nbsp;mA limit (calculation below). The push button connects 5&nbsp;V to pin D2 when pressed, and the 10&nbsp;k&Omega; pull-down resistor R4 connects D2 to GND. It holds the pin at 0&nbsp;V (LOW) when the button is up and limits the current to 0.5&nbsp;mA when the button is pressed (explained below).</figcaption>
+</figure>
+
+<h2>Resistor calculations</h2>
+<h3>LED resistors (R1&ndash;R3)</h3>
+<p>Using Ohm's law, the resistor has to drop whatever voltage the LED doesn't use:</p>
+<p class="eq"><strong>R = (V<sub>supply</sub> &minus; V<sub>f</sub>) / I</strong></p>
+<p>The Arduino's pins output 5&nbsp;V. Typical forward voltages for standard 5&nbsp;mm LEDs are about 2.0&nbsp;V (red), 2.1&nbsp;V (yellow) and 2.2&nbsp;V (green). I used <strong>20&nbsp;mA</strong> as the target, because that is the maximum continuous current for a standard 5&nbsp;mm LED and the recommended maximum for one Arduino pin. The red LED has the lowest forward voltage, so it needs the largest resistor and sets the minimum for all three:</p>
+<p class="eq">R<sub>min</sub> = (5&nbsp;V &minus; 2.0&nbsp;V) / 0.020&nbsp;A = <strong>150&nbsp;&Omega;</strong></p>
+<p>Any resistor of 150&nbsp;&Omega; or more is safe. I used <strong>220&nbsp;&Omega;</strong>, the next standard value in my kit, which gives a safety margin for parts that vary from their typical values and is still plenty bright for a nightlight toy. The actual current with 220&nbsp;&Omega;:</p>
+<table>
+  <tr><th>LED</th><th>V<sub>f</sub></th><th>I = (5 &minus; V<sub>f</sub>) / 220&nbsp;&Omega;</th></tr>
+  <tr><td>Red (D9)</td><td>2.0 V</td><td>3.0 / 220 = <strong>13.6 mA</strong></td></tr>
+  <tr><td>Green (D10)</td><td>2.2 V</td><td>2.8 / 220 = <strong>12.7 mA</strong></td></tr>
+  <tr><td>Yellow (D11)</td><td>2.1 V</td><td>2.9 / 220 = <strong>13.2 mA</strong></td></tr>
+</table>
+
+<h3>Button resistor (R4, 10&nbsp;k&Omega; pull-down)</h3>
+<p>The button connects 5&nbsp;V to pin D2. A resistor from D2 to GND does two jobs:</p>
+<ol>
+  <li><strong>It limits the current through the button.</strong> When the button is pressed, there is a path from 5&nbsp;V through the button and the resistor to GND. Without a resistor, pressing the button would short 5&nbsp;V straight to GND, pulling a large current that could damage the board or reset it. With 10&nbsp;k&Omega;, the current is only I = 5&nbsp;V / 10,000&nbsp;&Omega; = <strong>0.5&nbsp;mA</strong>. (The input pin itself draws less than 1&nbsp;&micro;A, so almost all of that 0.5&nbsp;mA goes through the resistor.)</li>
+  <li><strong>It gives the pin a definite value when the button is up.</strong> If D2 weren't connected to anything when the button is released, it would &ldquo;float&rdquo; and pick up electrical noise, randomly reading HIGH or LOW. The pull-down ties it to GND, so it reads a clean LOW until the button is pressed.</li>
+</ol>
+<p>I picked 10&nbsp;k&Omega; because it's the standard pull-down value: big enough that pressing the button wastes almost no current, but small enough to pull the pin firmly to 0&nbsp;V against noise. A much larger value (say, 1&nbsp;M&Omega;) would let noise creep back in, and a much smaller one (say, 100&nbsp;&Omega;) would waste 50&nbsp;mA every time the button is pressed.</p>
+
+<h2>Circuit</h2>
+<figure>
+  <img src="a2_circuit.jpg" alt="Photo of the Elegoo Uno R3 wired to a full-size breadboard with red, green and yellow LEDs, a push button and four resistors">
+  <figcaption>My circuit on an Elegoo Uno R3 (an Arduino Uno clone), wired to match the schematic. The Arduino's 5&nbsp;V (green wire) and GND (gray wire) feed the breadboard's top power rails, and the orange wire on the far right joins the top and bottom ground rails so both halves of the board share GND. Pins 9, 10 and 11 each run to a 220&nbsp;&Omega; resistor that feeds the long leg (anode) of the red, green and yellow LED, and a short black or yellow jumper takes each LED's short leg (cathode) to ground. The push button straddles the center channel: one side gets 5&nbsp;V from the top rail (short orange wire), and the other side goes to pin 2 (long orange wire) and, through the 10&nbsp;k&Omega; pull-down resistor and a black jumper, to the bottom ground rail.</figcaption>
+</figure>
+
+<h2>Firmware</h2>
+<p>Each time through <code>loop()</code>, the sketch checks the button with <code>digitalRead()</code>:</p>
+<ul>
+  <li><strong>Button pressed (HIGH):</strong> <code>digitalWrite()</code> turns the red and green LEDs fully on. Then two <code>for</code> loops count the yellow LED's brightness from 0 up to 255 and back down to 0, setting it with <code>analogWrite()</code> at each step. 256 steps &times; 4&nbsp;ms is about 1&nbsp;s up and 1&nbsp;s down. While the button is held, <code>loop()</code> keeps repeating, so the yellow LED keeps pulsing.</li>
+  <li><strong>Button not pressed (LOW):</strong> <code>digitalWrite()</code> turns the red and green LEDs off, and the yellow LED stays off because its last fade ended at 0.</li>
+</ul>
+<p>The button is only checked between pulses, so after it's released the jar finishes the current fade (up to about 2&nbsp;s) before going dark.</p>
+<p>The sketch is also in my repo at <code>a2/a2.ino</code>.</p>
+<pre><code>// Pin for the red LED
+const int RED = 9;
+// Pin for the green LED
+const int GREEN = 10;
+// Pin for the yellow LED (this one fades, so it must be a PWM pin)
+const int YELLOW = 11;
+// Pin the button is connected to
+const int BUTTON = 2;
+
+// setup() runs once when the Arduino starts
+void setup() {
+  // Set the red LED pin as an output
+  pinMode(RED, OUTPUT);
+  // Set the green LED pin as an output
+  pinMode(GREEN, OUTPUT);
+  // Set the yellow LED pin as an output
+  pinMode(YELLOW, OUTPUT);
+  // Set the button pin as an input
+  pinMode(BUTTON, INPUT);
+}
+
+// loop() runs over and over forever
+void loop() {
+  // Check if the button is pressed (HIGH) or not (LOW)
+  if (digitalRead(BUTTON) == HIGH) {
+    // Turn the red LED on
+    digitalWrite(RED, HIGH);
+    // Turn the green LED on
+    digitalWrite(GREEN, HIGH);
+    // Fade the yellow LED up: brightness goes from 0 to 255
+    for (int brightness = 0; brightness &lt;= 255; brightness++) {
+      // Set the yellow LED to this brightness
+      analogWrite(YELLOW, brightness);
+      // Wait 4 ms so the fade is slow enough to see
+      delay(4);
+    }
+    // Fade the yellow LED back down: brightness goes from 255 to 0
+    for (int brightness = 255; brightness &gt;= 0; brightness--) {
+      // Set the yellow LED to this brightness
+      analogWrite(YELLOW, brightness);
+      // Wait 4 ms so the fade is slow enough to see
+      delay(4);
+    }
+  // If the button is not pressed
+  } else {
+    // Turn the red LED off
+    digitalWrite(RED, LOW);
+    // Turn the green LED off
+    digitalWrite(GREEN, LOW);
+  }
+}</code></pre>
+
+<h2>Circuit in action</h2>
+<figure>
+  <img src="a2_demo.gif" alt="Animated GIF: the LEDs start dark; while the button is held, the red and green LEDs stay on and the yellow LED fades in and out; when the button is released, all LEDs go dark">
+  <figcaption>The Firefly Jar running. The jar starts dark. While I hold the button, the red and green fireflies stay lit and the yellow firefly pulses, fading up to full brightness and back down about once every 2 seconds. When I let go, the jar goes dark after the current pulse finishes.</figcaption>
+</figure>
+
+<h2>Questions</h2>
+
+<h3>1. Voltage across an LED with analogWrite(led, 64), 128 and 255</h3>
+<figure>
+  <img src="a2_pwm_chart.png" alt="Three square-wave graphs of voltage versus time for analogWrite values 64, 128 and 255. At 64 the LED is on 25 percent of each 2.04 ms period, at 128 for 50 percent, and at 255 it is on constantly.">
+  <figcaption><code>analogWrite()</code> doesn't actually output an in-between voltage. It uses <strong>pulse-width modulation (PWM)</strong>: the pin switches rapidly between 0&nbsp;V and 5&nbsp;V, and the value (0&ndash;255) sets what fraction of each cycle it spends HIGH. On the Uno, pin 11 runs PWM at about 490&nbsp;Hz, so each cycle is about 2.04&nbsp;ms. While the pin is HIGH, the voltage across the LED is its forward voltage (about 2.1&nbsp;V for my yellow LED; the other ~2.9&nbsp;V drops across the 220&nbsp;&Omega; resistor), and while it's LOW the LED sees 0&nbsp;V. At 64 the LED is on 64/255 = 25% of each cycle, at 128 it's on 50%, and at 255 it's on all the time, a flat line. The pulses are far faster than my flicker fusion threshold (around 50&ndash;60&nbsp;Hz, from A1), so my eyes average them and see a dim, medium or full-brightness glow. The dashed lines show that average.</figcaption>
+</figure>
+
+<h3>2. Total current with all LEDs on, and battery life</h3>
+<p>All three LEDs are fully on at once when the button is held and the yellow LED reaches the top of its fade (brightness 255). Adding up the currents from my resistor calculation:</p>
+<p class="eq">13.6&nbsp;mA (red) + 12.7&nbsp;mA (green) + 13.2&nbsp;mA (yellow) = <strong>39.5&nbsp;mA</strong></p>
+<p>The button must be held down for all three to be on, so the 0.5&nbsp;mA through the pull-down resistor also flows, for a total of about <strong>40&nbsp;mA</strong>.</p>
+<p>This is <strong>well below</strong> the Arduino's limits. Each pin carries only about 13&nbsp;mA, under the 20&nbsp;mA recommended limit (and the 40&nbsp;mA absolute maximum) per pin, and the whole circuit's ~40&nbsp;mA is far below the ATmega328P's 200&nbsp;mA total limit for the chip.</p>
+<p><strong>Battery life:</strong> battery life (hours) = capacity (mAh) / current (mA).</p>
+<ul>
+  <li>Counting just my circuit (LEDs + button): 1200&nbsp;mAh / 40&nbsp;mA = <strong>30 hours</strong>.</li>
+  <li>In reality the Uno board itself also draws current to run the microcontroller, the USB-serial chip, the voltage regulator and the power LED, roughly 45&ndash;50&nbsp;mA for an Uno-style board. Adding that, the total is about 85&ndash;90&nbsp;mA, and 1200&nbsp;mAh / ~88&nbsp;mA &asymp; <strong>about 13&ndash;14 hours</strong>. For a real toy, using a bare microcontroller instead of a full Uno board would make the batteries last much longer.</li>
+</ul>
+
+<h3>3. Measured voltage across an LED</h3>
+<p>I set my multimeter to DC volts, held the button down so the red and green LEDs stayed steadily on, and put the red probe on each LED's long leg (anode) and the black probe on its short leg (cathode). I didn't measure the yellow LED, because it's always fading and PWM makes the meter's reading jump around.</p>
+<table>
+  <tr><th>LED</th><th>Theoretical V<sub>f</sub></th><th>Measured V</th><th>Difference</th></tr>
+  <tr><td>Red (D9)</td><td>2.0 V</td><td><strong>1.91 V</strong></td><td>&minus;0.09 V (about 4.5% lower)</td></tr>
+  <tr><td>Green (D10)</td><td>2.2 V</td><td><strong>2.64 V</strong></td><td>+0.44 V (20% higher)</td></tr>
+</table>
+<p><strong>Red</strong> came out very close to the theoretical value, just 0.09&nbsp;V lower. A slightly low reading is expected: the &ldquo;typical&rdquo; forward voltage is usually quoted at 20&nbsp;mA, but my LED runs at only about 14&nbsp;mA, and an LED's forward voltage drops a little when less current flows through it. Real LEDs also vary a bit from part to part.</p>
+<p><strong>Green</strong> was noticeably higher than the 2.2&nbsp;V I assumed. That's because &ldquo;green&rdquo; LEDs are made from different materials. Older yellow-green LEDs have a forward voltage around 2.0&ndash;2.2&nbsp;V, while brighter &ldquo;true green&rdquo; LEDs, like the one in my kit seems to be, need more voltage, often 2.5&nbsp;V or more. So 2.2&nbsp;V was the wrong theoretical value for my particular LED, and checking the kit's datasheet would have given a better estimate.</p>
+<p>The measurements also let me recalculate the real currents. The resistor drops what the LED doesn't, so red gets (5 &minus; 1.91) / 220 = <strong>14.0&nbsp;mA</strong> and green gets (5 &minus; 2.64) / 220 = <strong>10.7&nbsp;mA</strong>. Both are still safely under 20&nbsp;mA, so my 220&nbsp;&Omega; resistors were a good choice. With these values, the total in Question 2 would be about 14.0 + 10.7 + 13.2 &asymp; 38&nbsp;mA (plus 0.5&nbsp;mA for the button), slightly less than my estimate.</p>
+
+<h3>4. Did you use AI tools?</h3>
+<p>Yes. I used Claude to help draft the Arduino sketch and its line-by-line comments, to generate the schematic and the PWM voltage chart, to check my resistor and battery-life calculations, and to lay out this page in HTML. I built and tested the circuit myself, took the photos and video, and measured the LED voltage myself.</p>
+
+</body>
 </html>
