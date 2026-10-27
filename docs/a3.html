@@ -17,7 +17,6 @@
   th, td { border: 1px solid #ddd; padding: 6px 12px; text-align: left; }
   th { background: #f6f8fa; }
   .eq { text-align: center; }
-  .todo { background: #fff3cd; border: 1px dashed #d4a300; padding: 12px 16px; border-radius: 6px; }
   a { color: #1f4e79; }
 </style>
 </head>
@@ -26,12 +25,12 @@
 <h1>Assignment 3: Smart Night Light</h1>
 <p class="sub">HCDE 439 Physical Computing &middot; a light-sensing smart home prototype</p>
 
-<p>For our smart home company, I prototyped a <strong>Smart Night Light</strong> that senses how much light is in a room and shows it in two ways. A photoresistor measures the room's brightness. As the room gets darker, a yellow &ldquo;lamp&rdquo; LED smoothly fades in, so a hallway or kid's room is never fully dark, and it fades back out when daylight returns. A red NIGHT LED turns on when the room drops below a dusk threshold, the moment a real system might also close the blinds or turn on the porch light. The Arduino also reports the light level over serial, the way a smart home hub would log sensor data.</p>
+<p>A <strong>Smart Night Light</strong> for a smart home: a photoresistor senses how bright the room is. As the room gets darker, a yellow &ldquo;lamp&rdquo; LED fades in, and when it drops below a dusk threshold a red NIGHT LED turns on. The light level is printed to the serial port.</p>
 
 <h2>Schematic</h2>
 <figure>
   <img src="a3_schematic.png" alt="Schematic: 5V connects through photoresistor R1 to a node called V-measure, which connects to pin A0 and through a 10 kilohm resistor R2 to GND. Pins D9 and D11 each drive a 220 ohm resistor and a red and yellow LED to GND.">
-  <figcaption>The sensor is a <strong>voltage divider</strong>: 5&nbsp;V &rarr; photoresistor R1 &rarr; V-measure &rarr; fixed resistor R2 (10&nbsp;k&Omega;) &rarr; GND, with V-measure wired to analog pin A0. A photoresistor's resistance drops as more light hits it, so in bright light R1 is small, more of the 5&nbsp;V appears across R2, and A0 reads a <em>high</em> voltage; in the dark R1 is large and A0 reads a <em>low</em> voltage. I chose <strong>R2 = 10&nbsp;k&Omega;</strong> because it is the geometric mean of the photoresistor's bright and dark resistances, which gives the biggest voltage swing (calculation below). The outputs are two LEDs from my A2 circuit, the red LED on ~D9 and the yellow LED on ~D11, each with a <strong>220&nbsp;&Omega;</strong> current-limiting resistor, which keeps each LED at about 13&nbsp;mA, under the 20&nbsp;mA limit. The yellow lamp LED must be on a PWM pin because the code dims it with <code>analogWrite()</code>.</figcaption>
+  <figcaption>The photoresistor (R1) and a fixed 10&nbsp;k&Omega; resistor (R2) form a <strong>voltage divider</strong> from 5&nbsp;V to GND. The point between them, V-measure, goes to A0. More light lowers R1&rsquo;s resistance, which raises V-measure. <strong>R2 = 10&nbsp;k&Omega;</strong> is the geometric mean of the photoresistor&rsquo;s bright and dark resistances (calculation below). Each LED has a <strong>220&nbsp;&Omega;</strong> resistor to keep its current around 13&nbsp;mA, under the 20&nbsp;mA limit. The yellow lamp is on PWM pin ~D11 so <code>analogWrite()</code> can dim it.</figcaption>
 </figure>
 
 <h2>Calculations</h2>
@@ -39,7 +38,7 @@
 <p>With the photoresistor on top (R1) and the fixed resistor on the bottom (R2), the voltage at A0 is:</p>
 <p class="eq"><strong>V<sub>measure</sub> = 5&nbsp;V &times; R2 / (R1 + R2)</strong></p>
 <p>and <code>analogRead()</code> turns 0&ndash;5&nbsp;V into a number from 0&ndash;1023, so <strong>reading = V<sub>measure</sub> &times; 1023 / 5</strong>.</p>
-<p>The photoresistor in my kit (a GL5528-type cadmium sulfide cell) is about <strong>2&nbsp;k&Omega;</strong> with a phone flashlight shining on it, about <strong>10&nbsp;k&Omega;</strong> in normal room light, and about <strong>50&nbsp;k&Omega;</strong> when I cover it with my hand. With R2 = 10&nbsp;k&Omega;:</p>
+<p>The photoresistor is about <strong>2&nbsp;k&Omega;</strong> with a phone flashlight shining on it, about <strong>10&nbsp;k&Omega;</strong> in normal room light, and about <strong>50&nbsp;k&Omega;</strong> when I cover it with my hand. With R2 = 10&nbsp;k&Omega;:</p>
 <table>
   <tr><th>Situation</th><th>R1 (photoresistor)</th><th>V<sub>measure</sub> = 5 &times; 10k / (R1 + 10k)</th><th>analogRead()</th></tr>
   <tr><td>Flashlight (bright)</td><td>2 k&Omega;</td><td>5 &times; 10 / 12 = <strong>4.17 V</strong></td><td>853</td></tr>
@@ -52,34 +51,22 @@
 <h3>Choosing R2 (the fixed resistor)</h3>
 <p>The best fixed resistor puts the sensor's range in the middle of the 0&ndash;5&nbsp;V window. Because a photoresistor's resistance changes by a <em>factor</em> (2&nbsp;k&Omega; to 50&nbsp;k&Omega; is 25&times;), the right middle is the geometric mean, not the average:</p>
 <p class="eq">R2 = &radic;(R<sub>low</sub> &times; R<sub>high</sub>) = &radic;(2,000&nbsp;&Omega; &times; 50,000&nbsp;&Omega;) = &radic;100,000,000 = <strong>10,000&nbsp;&Omega; = 10&nbsp;k&Omega;</strong></p>
-<p>10&nbsp;k&Omega; is 5&times; bigger than 2&nbsp;k&Omega; and 5&times; smaller than 50&nbsp;k&Omega;, so it sits proportionally in the center. To check, here is the voltage swing (bright V &minus; dark V) for a smaller and larger resistor:</p>
-<table>
-  <tr><th>R2</th><th>Bright (R1 = 2k)</th><th>Dark (R1 = 50k)</th><th>Swing</th></tr>
-  <tr><td>1 k&Omega;</td><td>5 &times; 1/3 = 1.67 V</td><td>5 &times; 1/51 = 0.10 V</td><td>1.57 V</td></tr>
-  <tr><td><strong>10 k&Omega;</strong></td><td>4.17 V</td><td>0.83 V</td><td><strong>3.33 V</strong></td></tr>
-  <tr><td>100 k&Omega;</td><td>5 &times; 100/102 = 4.90 V</td><td>5 &times; 100/150 = 3.33 V</td><td>1.57 V</td></tr>
-</table>
-<p>10&nbsp;k&Omega; gives more than twice the swing of either neighbor, which means more <code>analogRead()</code> steps (about 680 of the 1024) between dark and bright and a smoother fade. It also keeps the divider's current tiny: at most 5&nbsp;V / (2&nbsp;k&Omega; + 10&nbsp;k&Omega;) = <strong>0.42&nbsp;mA</strong>.</p>
-
 <h3>LED resistors (R3 and R4)</h3>
-<p>Same as A2: R<sub>min</sub> = (5&nbsp;V &minus; 2.0&nbsp;V) / 0.020&nbsp;A = 150&nbsp;&Omega;, so I used the next standard value, <strong>220&nbsp;&Omega;</strong>, giving about (5 &minus; 2.0) / 220 = 13.6&nbsp;mA for red and (5 &minus; 2.1) / 220 = 13.2&nbsp;mA for yellow.</p>
+<p>R<sub>min</sub> = (5&nbsp;V &minus; 2.0&nbsp;V) / 0.020&nbsp;A = 150&nbsp;&Omega;, so I used the next standard value, <strong>220&nbsp;&Omega;</strong>: (5 &minus; 2.0) / 220 &asymp; 13.6&nbsp;mA.</p>
 
 <h2>Circuit</h2>
 <figure>
   <img src="a3_circuit.jpg" style="max-width:440px;display:block;margin:0 auto;" alt="Top-down photo of the Elegoo Uno R3 above a vertical breadboard, with a red LED near the top, a photoresistor and 10 kilohm resistor in the middle, and a lit yellow LED near the bottom">
-  <figcaption>My circuit on the Elegoo Uno R3, wired to match the schematic (the breadboard is turned sideways, so its numbered rows run top to bottom). The red and yellow wires from the Arduino's power header bring 5&nbsp;V and GND to the two rails on the right side of the board. <strong>Red LED (top):</strong> the black wire from pin 9 goes to a 220&nbsp;&Omega; resistor feeding the red LED's long leg, and an orange jumper takes its short leg to the ground rail. <strong>Voltage divider (middle):</strong> an orange jumper from the 5&nbsp;V rail feeds one leg of the photoresistor; its other leg shares a row with the blue wire to A0 (this row is V-measure) and the 10&nbsp;k&Omega; resistor, and a yellow jumper takes the far end of the 10&nbsp;k&Omega; resistor to the ground rail. <strong>Yellow lamp LED (bottom):</strong> a long red wire from pin 11 runs down to a 220&nbsp;&Omega; resistor feeding the yellow LED, and a black jumper takes its short leg to ground. The yellow lamp is glowing here because the photo was taken in a fairly dim room.</figcaption>
+  <figcaption>The circuit, wired to match the schematic (the breadboard is turned sideways). The red and yellow wires bring 5&nbsp;V and GND to the right-side rails. <strong>Top:</strong> pin 9 &rarr; 220&nbsp;&Omega; &rarr; red LED &rarr; ground. <strong>Middle:</strong> the photoresistor runs from the 5&nbsp;V rail to the V-measure row, where the blue wire goes to A0 and the 10&nbsp;k&Omega; resistor continues to ground. <strong>Bottom:</strong> pin 11 (long red wire) &rarr; 220&nbsp;&Omega; &rarr; yellow LED &rarr; ground.</figcaption>
 </figure>
 
 <h2>Firmware</h2>
-<p>Every 100&nbsp;ms, the sketch:</p>
-<ol>
-  <li><strong>Reads</strong> V-measure with <code>analogRead(A0)</code>, a number from 0 (0&nbsp;V) to 1023 (5&nbsp;V).</li>
-  <li><strong>Constrains</strong> it to <strong>170&ndash;850</strong>, the dark (0.83&nbsp;V, sensor covered) to bright (4.17&nbsp;V, flashlight) range from my calculations, so a reading slightly outside that range can't push <code>map()</code> below 0 or above 255.</li>
-  <li><strong>Maps</strong> it with <code>map(clamped, 170, 850, 255, 0)</code>. The output range is flipped on purpose: the darkest reading (170) gives full brightness (255) and the brightest (850) gives 0, so the lamp fades in as the room gets darker. 255 is the top because <code>analogWrite()</code> is 8-bit. <code>analogWrite()</code> then sets the yellow LED's brightness.</li>
-  <li><strong>Checks for night</strong> with an <code>if</code>-statement: if the reading is below <strong>400</strong> (1.96&nbsp;V, meaning the photoresistor is above about 15.6&nbsp;k&Omega;, a dim, dusk-like room), the red NIGHT LED turns on; otherwise it's off. I picked 400 because it's clearly below normal room light (512), so a passing shadow doesn't trigger night mode, but well above a covered sensor (170).</li>
-  <li><strong>Prints</strong> <code>Room light level: </code> followed by the reading, so I can watch it in the Serial Monitor and graph it for Question 2.</li>
-</ol>
-<p>The sketch is also in my repo at <code>a3/a3.ino</code>.</p>
+<p>Why I chose the values in the code:</p>
+<ul>
+  <li><strong>170 and 850</strong> are the readings I calculated for a covered sensor (0.83&nbsp;V) and a flashlight (4.17&nbsp;V). <code>constrain()</code> keeps the reading in this range so <code>map()</code> stays between 0 and 255.</li>
+  <li><strong><code>map(clamped, 170, 850, 255, 0)</code></strong> is flipped so that dark gives full brightness (255, the 8-bit <code>analogWrite()</code> maximum) and bright gives 0.</li>
+  <li><strong>400</strong> (1.96&nbsp;V, photoresistor &asymp; 15.6&nbsp;k&Omega;) is the night threshold in the <code>if</code>-statement. It&rsquo;s below normal room light (512), so a small shadow doesn&rsquo;t trigger it.</li>
+</ul>
 <pre><code>// Analog pin connected to V-measure, the middle of the photoresistor / 10k voltage divider
 const int SENSOR = A0;
 // Red NIGHT LED (on when the room is dark)
@@ -129,10 +116,10 @@ void loop() {
 <h2>Circuit in action</h2>
 <figure>
   <img src="a3_demo.gif" style="max-width:440px;display:block;margin:0 auto;" alt="Animated GIF: the red LED is off in room light; when a finger covers the photoresistor the red NIGHT LED turns on and stays on, and it turns off again when the finger moves away">
-  <figcaption>The Smart Night Light running, with the Serial Monitor open on the laptop behind it. At the start the room is lit, the reading is above 400, and the red LED is off. When I cover the photoresistor with my finger (simulating nightfall), less light reaches it, its resistance goes up, V-measure drops below 1.96&nbsp;V (reading 400), and the red NIGHT LED turns on. At the same time <code>map()</code> raises the yellow lamp's brightness. When I move my finger away, the reading climbs back above 400 and the red LED turns off.</figcaption>
+  <figcaption>In room light the red LED is off. When I cover the photoresistor with my finger, V-measure drops below 1.96&nbsp;V (reading 400), the red NIGHT LED turns on, and the lamp gets brighter. When I move my finger away, the red LED turns off.</figcaption>
 </figure>
 <h3>Serial Monitor output</h3>
-<p>Real output from the demo (one line every 100&nbsp;ms), as my finger moves over the sensor:</p>
+<p>Output from the demo (one line every 100&nbsp;ms) as my finger covers the sensor:</p>
 <pre><code>Room light level: 437
 Room light level: 431
 Room light level: 429
@@ -147,7 +134,7 @@ Room light level: 388
 Room light level: 403
 Room light level: 375
 Room light level: 385</code></pre>
-<p>With the sensor uncovered, my room read about 430&ndash;520 (2.1&ndash;2.5&nbsp;V), close to the 512 (2.50&nbsp;V) I calculated for room light. As my finger covers the sensor the reading drops below 400 and the red LED turns on; for these readings the lamp's PWM value goes from about 155 (reading 437) up to about 179 (reading 375). A finger only shades the sensor partly, so the reading stayed around 375&ndash;400 rather than dropping to the fully dark 170. In an earlier test where I pressed closer it went down to about 255 (1.25&nbsp;V). Readings that hover right at 400 (like 402&ndash;409) briefly count as DAY, which shows why the threshold sits well below normal room light.</p>
+<p>Room light read about 430&ndash;520, close to the 512 I calculated. Covering the sensor with a finger dropped it to about 375&ndash;400, below the threshold, so the red LED turned on. A finger only partly shades the sensor, so it didn&rsquo;t reach the fully dark 170.</p>
 
 <h2>Questions</h2>
 
@@ -165,29 +152,25 @@ Room light level: 385</code></pre>
   <li>Dark (50&nbsp;k&Omega;): 5 &times; 50 / 60 = 4.17&nbsp;V &rarr; reading 853</li>
   <li>More light = <strong>lower</strong> voltage.</li>
 </ul>
-<p>Both give the same 3.33&nbsp;V swing (171 to 853), so the sensor is equally sensitive either way. The difference is only in the code: with the photoresistor on the bottom, dark gives the <em>high</em> reading, so I would write <code>map(clamped, 170, 850, 0, 255)</code> (no flip needed for the lamp) and turn on the red LED with <code>if (light &gt; 623)</code> (the mirror of 400: 1023 &minus; 400 = 623). What matters is that one resistor is variable and the other is fixed. If both were fixed the voltage would never change, and without the fixed resistor there would be no divider at all, so A0 would always read 5&nbsp;V.</p>
+<p>Both give the same swing (171 to 853), just in opposite directions. With the photoresistor on the bottom, the code would flip: <code>map(clamped, 170, 850, 0, 255)</code> and <code>if (light &gt; 623)</code>.</p>
 
 <h3>2. V-measure over time during the demo</h3>
 <figure>
   <img src="a3_voltage_graph.png" alt="Line graph of V-measure over 3.1 seconds: about 2.4 to 2.5 V for the first 1.3 seconds, then dropping to around 2.0 to 2.1 V as a finger approaches, then hovering around 1.85 to 2.0 V, right at and below the dashed 1.96 V night threshold line">
-  <figcaption>The voltage at A0 (left axis) and the matching <code>analogRead()</code> value (right axis), plotted from the 32 Serial Monitor readings I captured during the demo (one every 100&nbsp;ms, about 3.1&nbsp;s). For the first 1.3&nbsp;s the sensor is uncovered and V-measure sits at about 2.4&ndash;2.5&nbsp;V (readings 489&ndash;514), close to the 2.50&nbsp;V I calculated for room light. As my finger moves over the photoresistor, less light reaches it, its resistance rises, and V-measure drops to about 2.0&ndash;2.1&nbsp;V. Once the finger is covering it, V-measure hovers around 1.83&ndash;1.98&nbsp;V (readings 375&ndash;409), mostly below the red dashed night threshold of 1.96&nbsp;V (reading 400); every reading below the line turns the red NIGHT LED on. A finger only partly shades the sensor, so the voltage doesn't fall all the way to the 0.83&nbsp;V I calculated for a fully covered sensor. The graph covers the part of the run I copied from the Serial Monitor; the rest of the video continues with the sensor covered (red LED on) until I move my finger away at the end. The raw readings are in <code>a3/serial_log.txt</code> and the graph is made by <code>a3/plot_voltage.py</code>.</figcaption>
+  <figcaption>V-measure (left axis) and the <code>analogRead()</code> value (right axis) from 32 Serial Monitor readings during the demo, one every 100&nbsp;ms. Uncovered, V-measure is about 2.4&ndash;2.5&nbsp;V. As my finger covers the sensor it drops to about 1.83&ndash;1.98&nbsp;V, mostly below the 1.96&nbsp;V night threshold (dashed line), which turns the red LED on.</figcaption>
 </figure>
 
 <h3>3. 10-bit PWM and a 16-bit ADC</h3>
-<p>Right now <code>analogRead()</code> is 10-bit (2<sup>10</sup> = 1024 values, 0&ndash;1023) and <code>analogWrite()</code> is 8-bit (2<sup>8</sup> = 256 values, 0&ndash;255). With a <strong>16-bit ADC</strong> the reading would range 0&ndash;65,535, and with <strong>10-bit PWM</strong> the output would range 0&ndash;1023. The same voltage would just be described with finer steps, so every number on each side of <code>map()</code> has to be rescaled:</p>
-<ul>
-  <li><strong>Input side:</strong> a 16-bit reading is 2<sup>16</sup> / 2<sup>10</sup> = <strong>64&times;</strong> larger for the same voltage. My dark and bright calibration values become 170 &times; 64 = <strong>10,880</strong> and 850 &times; 64 = <strong>54,400</strong> (check: 0.83&nbsp;V &times; 65,535 / 5 &asymp; 10,900 and 4.17&nbsp;V &times; 65,535 / 5 &asymp; 54,650). The night threshold becomes 400 &times; 64 = <strong>25,600</strong>.</li>
-  <li><strong>Output side:</strong> full brightness is now <strong>1023</strong> instead of 255.</li>
-</ul>
+<p>The ranges on both sides of <code>map()</code> would change. A 16-bit ADC reads 0&ndash;65,535 instead of 0&ndash;1023 (2<sup>16</sup> / 2<sup>10</sup> = <strong>64&times;</strong> larger for the same voltage), so my input values become 170 &times; 64 = <strong>10,880</strong> and 850 &times; 64 = <strong>54,400</strong>, and the threshold becomes 400 &times; 64 = <strong>25,600</strong>. 10-bit PWM outputs 0&ndash;<strong>1023</strong> instead of 0&ndash;255, so full brightness becomes 1023.</p>
 <pre><code>// before: 10-bit ADC in, 8-bit PWM out
-int lampBrightness = map(clamped, 170, 850, 255, 0);
+int brightness = map(clamped, 170, 850, 255, 0);
 
 // after: 16-bit ADC in, 10-bit PWM out
-long lampBrightness = map(clamped, 10880, 54400, 1023, 0);</code></pre>
-<p>One more catch: on the Uno an <code>int</code> only holds up to 32,767, so a 16-bit reading (up to 65,535) wouldn't fit. The reading would need to be stored as <code>unsigned int</code> or <code>long</code>. The result is the same behavior, the lamp still goes from fully on in the dark to off in bright light, but with 64&times; finer input steps and 4&times; finer brightness steps, so the fade would be even smoother.</p>
+long brightness = map(clamped, 10880, 54400, 1023, 0);</code></pre>
+<p>The reading would also need a <code>long</code> or <code>unsigned int</code>, because an Uno <code>int</code> only goes up to 32,767.</p>
 
-<h3>4. Did you use AI tools?</h3>
-<p>Yes. I used Claude to help draft the Arduino sketch, to generate a cleaner schematic drawing, and voltage graph. I also used it to help me lay this page out in HTML, and check my calculations/grammar. I built and tested the circuit myself and took the photo and video myself.</p>
+<h3>AI use</h3>
+<p>I used Claude to help draft the code and comments, generate a cleaner schematic drawing, and graph. Also to check my calculations, and format this page. I built and tested the circuit and recorded the photo and video myself.</p>
 
 </body>
 </html>
