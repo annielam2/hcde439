@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A5: Transistors</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; line-height: 1.6; color: #222; background: #fff; }
+  h1 { margin-bottom: 0; }
+  .sub { color: #666; margin-top: 4px; }
+  h2 { margin-top: 48px; border-bottom: 2px solid #eee; padding-bottom: 4px; }
+  h3 { margin-top: 32px; }
+  figure { margin: 24px 0; }
+  figure img { width: 100%; height: auto; border: 1px solid #ddd; border-radius: 6px; }
+  figcaption { font-size: 0.95em; color: #444; margin-top: 8px; }
+  pre { background: #f6f8fa; border: 1px solid #ddd; border-radius: 6px; padding: 16px; overflow-x: auto; font-size: 0.85em; line-height: 1.45; }
+  table { border-collapse: collapse; margin: 16px 0; width: 100%; }
+  th, td { border: 1px solid #ddd; padding: 6px 12px; text-align: left; }
+  th { background: #f6f8fa; }
+  .todo { background: #fff4d6; border: 1px dashed #d4a017; border-radius: 6px; padding: 12px 16px; margin: 16px 0; }
+  .calc { background: #f6f8fa; border: 1px solid #ddd; border-radius: 6px; padding: 14px 18px; margin: 14px 0; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.92em; }
+  a { color: #1f4e79; }
+</style>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to home</a></p>
+<h1>Assignment 5: Transistors</h1>
+<p class="sub">HCDE 439 Physical Computing &middot; an N-MOSFET switching load power separate from logic power</p>
+
+<p>A <strong>remote-controlled LED strip dimmer</strong>. The Arduino's own 5&nbsp;V only ever powers its own logic and the IR receiver; the 12&nbsp;V LED strip is powered entirely from a separate 12&nbsp;V/2&nbsp;A AC&ndash;DC adapter, switched by an <strong>IRLZ44N N-MOSFET</strong> acting as a low-side switch. Pressing <strong>1</strong>, <strong>2</strong> or <strong>3</strong> on the IR remote sets the strip to off, dim or full brightness via <code>analogWrite()</code>. It uses one library for the input (<strong>IRremote</strong>, for the IR receiver) and reuses the N-MOSFET circuit from our L9 in-class exercise for the output.</p>
+
+<h2>Schematic</h2>
+<figure>
+  <img src="a5_schematic_hand.jpg" alt="Hand-drawn schematic: the Arduino Uno box lists 5V, Pin 11, Pin ~9 and GND. 5V goes to the IR receiver's VCC, and the receiver's OUT (signal) goes to Pin 11. Pin ~9 goes through R1 = 220 ohms to the Gate of a circled IRLZ44N MOSFET, with R2 = 10 kilohms from the Gate to ground; the Pin 9 wire hops over the receiver's GND wire. The MOSFET's Drain goes up to the minus side of a box labeled LED Strip (12V LED strip, 1 section, 3 LEDs), whose plus side goes to 12V from the adapter. The Source, R2, the receiver's GND and the Arduino GND all join one ground line with a ground symbol labeled Arduino GND and 12V adapter minus.">
+  <figcaption>Two separate power domains that share only a ground: the <strong>+5&nbsp;V logic rail</strong> comes straight from the Arduino's own 5V pin and only powers the Arduino and the IR receiver. The <strong>+12&nbsp;V load rail</strong> comes from the external Sansun AC&ndash;DC adapter and only powers the LED strip. The IRLZ44N N-MOSFET is a <strong>low-side switch</strong>: its Drain connects to the strip's return lead, its Source goes to GND, and its Gate is driven from the Arduino's PWM pin D9 through gate resistor R1, with pulldown resistor R2 holding the Gate (and therefore the strip) off whenever D9 isn't actively driven. The Arduino's GND is tied to the 12V supply's GND &mdash; without this common ground, the MOSFET's Gate-to-Source voltage would be meaningless and nothing would switch.</figcaption>
+</figure>
+
+<h2>Why these component values</h2>
+
+<h3>Choosing the IRLZ44N specifically</h3>
+<p>I checked the text printed on my transistor's body: it reads <strong>IRLZ44N</strong>. This matters because it's a <em>logic-level</em> N-MOSFET &mdash; its datasheet specifies full performance at V<sub>GS</sub>&nbsp;=&nbsp;5&nbsp;V. An ordinary N-MOSFET like the IRFZ44N (one letter different!) needs roughly 10&nbsp;V on the Gate to fully turn on, which the Arduino's 5&nbsp;V output can't supply on its own without an extra gate-driver stage. The IRLZ44N lets the Arduino drive the Gate directly.</p>
+
+<h3>R1 &mdash; 220&nbsp;&Omega; gate resistor</h3>
+<p>The MOSFET's Gate acts like a small capacitor. Once it's charged, no current flows into it, but every time D9 switches it has to charge or discharge, and R1 limits how big that current spike is. R1 has to sit between two limits:</p>
+<div class="calc"><strong>Lower limit &mdash; protect the Arduino pin.</strong> The ATmega328P's absolute maximum is 40&nbsp;mA per pin:<br>
+R1 &ge; 5&nbsp;V / 0.040&nbsp;A = <strong>125&nbsp;&Omega;</strong><br><br>
+<strong>Upper limit &mdash; switch fast.</strong> While the Gate is partway charged, the MOSFET is only partly on and turns power into heat, so that in-between time should be a tiny slice of each PWM cycle. With R1 = 220&nbsp;&Omega; the charging current starts at 5&nbsp;V / 220&nbsp;&Omega; &asymp; 22.7&nbsp;mA. The datasheet's worst-case total gate charge is Q<sub>g</sub> = 48&nbsp;nC; even if only half the peak current (~11&nbsp;mA) flowed the whole time:<br>
+t<sub>switch</sub> &asymp; Q<sub>g</sub> / I = 48&nbsp;nC / 0.011&nbsp;A &asymp; 4.4&nbsp;&micro;s<br>
+D9's PWM runs at about 490&nbsp;Hz (<a href="https://docs.arduino.cc/language-reference/en/functions/analog-io/analogWrite/">Arduino analogWrite() reference</a>), so one cycle is 1 / 490&nbsp;Hz &asymp; 2.04&nbsp;ms, and 4.4&nbsp;&micro;s / 2,040&nbsp;&micro;s &asymp; <strong>0.2%</strong> of each cycle.</div>
+<p>Any value above 125&nbsp;&Omega; protects the pin, and a few hundred ohms still switches in a fraction of a percent of each cycle. Of the standard resistor values in our kits (100, 220, 330&nbsp;&Omega;&hellip;), <strong>220&nbsp;&Omega; is the smallest one above 125&nbsp;&Omega;</strong>; the next one down, 100&nbsp;&Omega;, would allow 50&nbsp;mA. It's also the gate resistor from our L9 in-class MOSFET circuit. The 22.7&nbsp;mA peak is slightly above the pin's 20&nbsp;mA <em>continuous</em> recommendation, but it lasts only microseconds per switch and stays under the 40&nbsp;mA absolute maximum.</p>
+
+<h3>R2 &mdash; 10&nbsp;k&Omega; gate pulldown</h3>
+<p>If the Gate were left floating (for example, during the instant after power-up before <code>setup()</code> has run <code>pinMode()</code> and <code>digitalWrite()</code>), stray noise could turn the MOSFET on unintentionally and flash the LED strip. R2 holds the Gate at a defined 0&nbsp;V any time D9 isn't actively driving it. R2 also has to sit between two limits:</p>
+<div class="calc"><strong>Lower limit &mdash; don't steal the Gate's voltage.</strong> R1 and R2 form a voltage divider. To keep V<sub>GS</sub> at least 4.5&nbsp;V (90% of 5&nbsp;V, close to the 5&nbsp;V where the datasheet specifies R<sub>DS(on)</sub>):<br>
+R2 / (R1 + R2) &ge; 0.9 &nbsp;&rarr;&nbsp; R2 &ge; 9 &times; R1 = 9 &times; 220&nbsp;&Omega; = <strong>1,980&nbsp;&Omega;</strong><br><br>
+<strong>Upper limit &mdash; hold the Gate firmly at 0&nbsp;V.</strong> The datasheet's maximum gate leakage is I<sub>GSS</sub> = 100&nbsp;nA. Through 10&nbsp;k&Omega; that leakage could lift the Gate by at most 100&nbsp;nA &times; 10,000&nbsp;&Omega; = <strong>1&nbsp;mV</strong>, a thousand times below the 1.0&nbsp;V minimum threshold. And when D9 lets go of the Gate, R2 drains the Gate's 1,700&nbsp;pF input capacitance (C<sub>iss</sub>) with a time constant of 10,000&nbsp;&Omega; &times; 1,700&nbsp;pF = 17&nbsp;&micro;s, so the strip goes dark in well under a millisecond.</div>
+<p>10&nbsp;k&Omega; is comfortably above the 1,980&nbsp;&Omega; minimum and still small enough to hold the Gate at 0&nbsp;V. It's also the pulldown value from our L9 in-class circuit. Checking the actual divider with both resistors:</p>
+<div class="calc">V<sub>GS</sub> = 5&nbsp;V &times; R2 / (R1 + R2) = 5&nbsp;V &times; 10,000 / (10,000 + 220) &asymp; <strong>4.89&nbsp;V</strong></div>
+<p>The IRLZ44N's datasheet lists V<sub>GS(th)</sub> (the voltage where it just starts to turn on) as 1.0&ndash;2.0&nbsp;V. 4.89&nbsp;V is 2.4&ndash;4.9&times; that threshold, which is what actually matters: the Gate needs to be driven well <em>past</em> threshold, not just above it, to reach the low R<sub>DS(on)</sub> the datasheet specifies at V<sub>GS</sub>&nbsp;=&nbsp;5&nbsp;V. The current this divider wastes is tiny and doesn't meaningfully load the Arduino pin:</p>
+<div class="calc">I<sub>R2</sub> = V<sub>GS</sub> / R2 = 4.89&nbsp;V / 10,000&nbsp;&Omega; &asymp; 0.49&nbsp;mA</div>
+
+<h3>Drain&ndash;Source side: current, voltage and power</h3>
+<p>My strip is a <strong>Lepro 12&nbsp;V LED strip, model PR4100057-DW-US</strong> (6000&nbsp;K daylight white). A full roll is 16.4&nbsp;ft (5&nbsp;m) with 300 SMD&nbsp;2835 LEDs, and the label on the back of its box gives its ratings as <strong>16&nbsp;W, 12&nbsp;V&nbsp;DC, 1.5&nbsp;A</strong>. It can only be cut every 3 LEDs, because each 3-LED section is its own little circuit wired in parallel with the others across 12&nbsp;V. I used <strong>one 3-LED section</strong>, the smallest piece you can cut. The roll holds 300&nbsp;/&nbsp;3 = 100 identical sections sharing the rated 1.5&nbsp;A, so one section draws:</p>
+<div class="calc">I<sub>strip</sub> = 1.5&nbsp;A / 100 sections = <strong>15&nbsp;mA</strong> at full brightness (rated)<br>
+P<sub>section</sub> = 12&nbsp;V &times; 0.015&nbsp;A = 0.18&nbsp;W</div>
+<p>The 1.5&nbsp;A on the label is the rated current; the 16&nbsp;W power figure works out a bit lower (16&nbsp;W / 12&nbsp;V / 100 &asymp; 13&nbsp;mA per section). I use the higher 15&nbsp;mA so every calculation below is the worst case.</p>
+<p>At the dim setting, <code>analogWrite(9, 90)</code> keeps the MOSFET on for 90/255 of each PWM cycle, so the <em>average</em> current drops to about 15&nbsp;mA &times; 90/255 &asymp; 5.3&nbsp;mA. During each &ldquo;on&rdquo; slice it's still the full 15&nbsp;mA; PWM only changes how long it flows.</p>
+<p>With the MOSFET fully on, its datasheet lists R<sub>DS(on)</sub>&nbsp;&asymp;&nbsp;0.025&nbsp;&Omega; at V<sub>GS</sub>&nbsp;=&nbsp;5&nbsp;V. At 15&nbsp;mA almost none of the 12&nbsp;V is lost across the MOSFET itself:</p>
+<div class="calc">V<sub>DS(on)</sub> = I<sub>strip</sub> &times; R<sub>DS(on)</sub> = 0.015&nbsp;A &times; 0.025&nbsp;&Omega; &asymp; 0.4&nbsp;mV<br>
+P<sub>MOSFET</sub> = I<sub>strip</sub>&sup2; &times; R<sub>DS(on)</sub> = (0.015&nbsp;A)&sup2; &times; 0.025&nbsp;&Omega; &asymp; 0.006&nbsp;mW</div>
+<p>So the strip gets essentially the full 12&nbsp;V, and the MOSFET stays at room temperature with no heatsink (its rating is 110&nbsp;W at T<sub>C</sub>&nbsp;=&nbsp;25&deg;C).</p>
+<p><strong>Why a transistor at all for only 15&nbsp;mA?</strong> 15&nbsp;mA is within what an Arduino pin can supply, but the problem is <em>voltage</em>, not current: each section has three LEDs in series with a small resistor and needs 12&nbsp;V to light, and an Arduino pin can only output 5&nbsp;V. The MOSFET lets the Arduino's 5&nbsp;V signal switch the adapter's separate 12&nbsp;V supply, and the same circuit would keep working for a longer piece of strip without changing anything on the Arduino side.</p>
+
+<h3>Expected voltages and currents at key points</h3>
+<p>Measured from GND. &ldquo;On&rdquo; is full brightness (<code>analogWrite(9, 255)</code>); &ldquo;off&rdquo; is <code>analogWrite(9, 0)</code>. At the dim setting each point switches between these two columns about 490 times a second, spending 90/255 &asymp; 35% of the time in the &ldquo;on&rdquo; column.</p>
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Point in the circuit</th><th>On (full)</th><th>Off</th><th>Where it comes from</th></tr>
+  <tr><td>Arduino 5V rail (logic)</td><td>5&nbsp;V</td><td>5&nbsp;V</td><td>USB power through the Arduino</td></tr>
+  <tr><td>12V rail (load)</td><td>12&nbsp;V</td><td>12&nbsp;V</td><td>Sansun adapter</td></tr>
+  <tr><td>D9 pin</td><td>5&nbsp;V</td><td>0&nbsp;V</td><td><code>analogWrite()</code> output</td></tr>
+  <tr><td>Gate (G, pin 1)</td><td>4.89&nbsp;V</td><td>0&nbsp;V</td><td>R1/R2 divider; R2 holds it at 0&nbsp;V when off</td></tr>
+  <tr><td>Current out of D9</td><td>0.49&nbsp;mA steady (22.7&nbsp;mA peak for microseconds at each switch)</td><td>0</td><td>4.89&nbsp;V / 10&nbsp;k&Omega; through R2; 5&nbsp;V / 220&nbsp;&Omega; peak through R1</td></tr>
+  <tr><td>Drain (D, pin 2)</td><td>&asymp; 0.4&nbsp;mV</td><td>up to 12&nbsp;V</td><td>On: 15&nbsp;mA &times; 0.025&nbsp;&Omega;. Off: no current flows, so the strip drops almost nothing and the MOSFET blocks the supply voltage, well under its 55&nbsp;V V<sub>DSS</sub> rating</td></tr>
+  <tr><td>Source (S, pin 3)</td><td>0&nbsp;V</td><td>0&nbsp;V</td><td>Tied to GND</td></tr>
+  <tr><td>Across the LED strip section</td><td>&asymp; 12&nbsp;V</td><td>&asymp; 0&nbsp;V</td><td>12&nbsp;V rail minus the Drain voltage</td></tr>
+  <tr><td>Current through strip, Drain and Source</td><td>15&nbsp;mA</td><td>0</td><td>1.5&nbsp;A roll rating / 100 sections</td></tr>
+  <tr><td>IR receiver OUT &rarr; D11</td><td colspan="2">5&nbsp;V while idle; drops to 0&nbsp;V in short pulses while a button signal arrives</td><td>The receiver's output is active-low; the library decodes the pulse pattern</td></tr>
+</table>
+</div>
+
+<h3>Transistor current rating &mdash; is 15&nbsp;mA safe?</h3>
+<p>Per the <a href="https://www.infineon.com/assets/row/public/documents/24/49/infineon-irlz44n-datasheet-en.pdf">Infineon IRLZ44N datasheet</a>, the absolute maximum continuous drain current is <strong>47&nbsp;A</strong> at T<sub>C</sub>&nbsp;=&nbsp;25&deg;C (33&nbsp;A at 100&deg;C, and a 160&nbsp;A pulsed rating). My 15&nbsp;mA load is a tiny fraction of that:</p>
+<div class="calc">0.015&nbsp;A / 47&nbsp;A &asymp; 0.03%</div>
+<p>Even the whole 5&nbsp;m roll is only rated for 1.5&nbsp;A, and the Sansun adapter can't supply more than 2&nbsp;A; 2&nbsp;A / 47&nbsp;A &asymp; 4.3% of the MOSFET's maximum. So in this circuit the adapter's 2&nbsp;A limit would run out long before the transistor's. The IRLZ44N wasn't chosen for its current capacity; it was chosen because it's the one N-MOSFET of the three listed in the assignment that's logic-level and can be driven directly from the Arduino's 5&nbsp;V.</p>
+
+<h2>Circuit</h2>
+<figure>
+  <img src="a5_circuit_photo.jpg" alt="Photo of the real circuit from above: an Elegoo Uno R3 at the top powered by USB; a long breadboard in the middle with the IRLZ44N MOSFET lying flat near the left, metal tab up, with two small resistors just above it, and the IR receiver module on the right; the 12V adapter's barrel-jack connector with a green screw terminal at the top left, its red and black leads running to the breadboard; a 3-LED piece of LED strip at the bottom held by red and black alligator clips; and the Elegoo IR remote on the right.">
+  <figcaption>My circuit on an Elegoo Uno R3 (top, powered over USB). The IRLZ44N lies flat near the left of the breadboard with its metal tab facing up, and its two resistors sit just above it: R1 (220&nbsp;&Omega;) between the red jumper from Pin&nbsp;9 and the Gate, and R2 (10&nbsp;k&Omega;) from the Gate to ground. The IR receiver module is on the right side of the board, wired to 5&nbsp;V, GND and Pin&nbsp;11. The Sansun 12&nbsp;V adapter plugs into the barrel-jack connector at the top left (green screw terminal), whose red and black leads bring 12&nbsp;V and ground to the breadboard. The 3-LED piece of Lepro 12&nbsp;V LED strip at the bottom connects by alligator clips: its positive lead to 12&nbsp;V and its negative lead to the MOSFET's Drain. A gray jumper ties the top and bottom ground rails together so both supplies share a common ground. The remote I use for the demo is on the right.</figcaption>
+</figure>
+
+<h2>Firmware</h2>
+<p>Why I chose the values in the code:</p>
+<ul>
+  <li><strong>D9 for the MOSFET Gate.</strong> <code>analogWrite()</code> needs a PWM pin (3, 5, 6, 9, 10 or 11 on an Uno). On an Uno the IRremote library uses the chip's <strong>Timer2</strong> to time incoming IR signals, and Timer2 is also what makes the PWM on pins 3 and 11, so <code>analogWrite()</code> on those two pins stops working once the library is running (<a href="https://forum.arduino.cc/t/solved-irremote-rgb-led-pwm-at-pin-11-breaks/861856">Arduino forum: IRremote breaks PWM on pin 11</a>). D9 runs on Timer1 at about 490&nbsp;Hz, so it's unaffected, and it's the pin from our L9 in-class circuit.</li>
+  <li><strong>D11 for the IR receiver.</strong> The receiver's OUT pin only needs a plain digital <em>input</em>, which any pin can be; the library times the signal itself. Using D11 as an input doesn't conflict with Timer2, because nothing is doing PWM on it. I kept the same pin as my A4 wiring.</li>
+  <li><strong>0x0C, 0x18, 0x5E</strong> are the codes for buttons 1, 2 and 3 on my remote. I found them in Assignment 4 by printing every received code to the Serial Monitor; the sketch still prints each code so they can be re-checked.</li>
+  <li><strong>0 and 255</strong> are the two ends of <code>analogWrite()</code>'s 8-bit range: 0 keeps the MOSFET off for the whole PWM cycle (strip off) and 255 keeps it on for the whole cycle (full brightness).</li>
+  <li><strong>90 for &ldquo;dim&rdquo;.</strong> I wanted the dim level clearly between off and full, roughly two-thirds of the way up in how bright it <em>looks</em>, so all three settings are easy to tell apart. Our eyes don't see brightness linearly, so a 50% duty cycle doesn't look half as bright. The CIE 1976 lightness formula estimates perceived brightness L* (0&ndash;100) from the fraction of full light output Y, here the duty cycle:
+    <div class="calc">L* = 116 &times; Y<sup>1/3</sup> &minus; 16<br>
+    analogWrite 128: Y = 128/255 = 0.50 &rarr; L* = 116 &times; 0.794 &minus; 16 &asymp; <strong>76</strong> (three-quarters as bright, hard to tell from full)<br>
+    analogWrite 90: &nbsp;Y = 90/255 = 0.35 &rarr; L* = 116 &times; 0.707 &minus; 16 &asymp; <strong>66</strong> (about two-thirds as bright)<br>
+    For comparison, looking exactly half as bright (L* = 50) would need Y = ((50 + 16)/116)<sup>3</sup> &asymp; 0.18, or analogWrite &asymp; 47.</div>
+    90 gives a clear step down from full while staying obviously on, which is what the demo shows.</li>
+  <li><strong>9600 baud</strong> is the Serial Monitor's default speed. The sketch prints at most a few characters per button press, and 9600 baud carries about 960 characters per second, so a faster speed wouldn't change anything.</li>
+  <li>In <code>setup()</code>, <code>pinMode(GATE_PIN, OUTPUT)</code> doesn't itself force a voltage &mdash; the pin keeps whatever state it already had (LOW, after reset). R2's pulldown independently keeps the physical Gate near 0&nbsp;V the whole time, so the immediately-following <code>digitalWrite(GATE_PIN, LOW)</code> is just making that explicit in software before <code>loop()</code> starts.</li>
+</ul>
+<p><strong>Sources:</strong> the <a href="https://github.com/Arduino-IRremote/Arduino-IRremote">IRremote library</a> (Armin Joachimsmeyer, Ken Shirriff et al.; MIT license), whose SimpleReceiver example the IR-receiving lines follow; our HCDE 439 L9 in-class <code>mosfet_strip</code> sketch, which the MOSFET wiring and <code>analogWrite()</code> dimming are adapted from; and my Assignment 4, where I found the remote's button codes. The comments at the top of the code say the same.</p>
+<pre><code>// Sources: the IRremote library by Armin Joachimsmeyer, Ken Shirriff et al. (https://github.com/Arduino-IRremote/Arduino-IRremote, MIT license);
+// the IR receive code (IrReceiver.begin / decode / resume) follows that library&#x27;s SimpleReceiver example.
+// The MOSFET Gate wiring and analogWrite() dimming are adapted from our HCDE 439 L9 in-class mosfet_strip sketch,
+// and the remote button codes come from my Assignment 4.
+
+// Include the IRremote library (install &quot;IRremote&quot; v4.x in the Library Manager); it decodes the remote&#x27;s button signals
+#include &lt;IRremote.hpp&gt;
+
+// Digital pin wired to the IR receiver&#x27;s OUT pin (see schematic)
+const int IR_PIN = 11;
+// PWM-capable digital pin wired through R1 (220 ohm) to the MOSFET&#x27;s Gate
+const int GATE_PIN = 9;
+
+// Code the remote sends for button 1 (found in Assignment 4 by printing IrReceiver.decodedIRData.command to the Serial Monitor)
+const int BTN_1 = 0x0C;
+// Code the remote sends for button 2 (found the same way)
+const int BTN_2 = 0x18;
+// Code the remote sends for button 3 (found the same way)
+const int BTN_3 = 0x5E;
+
+// analogWrite() level for &quot;off&quot;: 0 out of 255 = 0% duty cycle, so the MOSFET never turns on and the strip is dark
+const int LEVEL_OFF = 0;
+// analogWrite() level for &quot;dim&quot;: 90 out of 255 = about 35% duty cycle (why 90 is explained on the webpage)
+const int LEVEL_LOW = 90;
+// analogWrite() level for &quot;full&quot;: 255 out of 255 = 100% duty cycle, so the MOSFET stays on and the strip is at full brightness
+const int LEVEL_HIGH = 255;
+
+// setup() runs once when the Arduino powers on or is reset
+void setup() {
+  // Start serial at 9600 baud so received button codes show in the Serial Monitor
+  Serial.begin(9600);
+
+  // Make the gate pin an output. On an Uno, pinMode(OUTPUT) does not by itself
+  // force a voltage: the pin keeps whatever logic level it last had (LOW after
+  // reset/power-up), and R2 (the 10k pulldown in the schematic) independently
+  // holds the MOSFET&#x27;s Gate near 0 V the whole time setup() is running, so the
+  // strip stays off during this brief startup window no matter what.
+  pinMode(GATE_PIN, OUTPUT);
+
+  // Explicitly drive the gate pin LOW (0 V) so the MOSFET is OFF and the LED
+  // strip is dark the instant setup() finishes, before loop() ever runs
+  digitalWrite(GATE_PIN, LOW);
+
+  // Start the IR receiver listening on IR_PIN
+  IrReceiver.begin(IR_PIN);
+}
+
+// loop() runs over and over for as long as the board has power
+void loop() {
+  // Check whether the IR receiver has decoded a new button press
+  if (IrReceiver.decode()) {
+    // Read the numeric command code sent by whichever button was pressed
+    int code = IrReceiver.decodedIRData.command;
+    // Print the code in hex so it&#x27;s easy to confirm which button was pressed
+    Serial.println(code, HEX);
+
+    // Button 1 pressed...
+    if (code == BTN_1) {
+      // ...turn the LED strip fully off by driving the MOSFET&#x27;s gate to 0 V
+      analogWrite(GATE_PIN, LEVEL_OFF);
+      // Button 2 pressed...
+    } else if (code == BTN_2) {
+      // ...set the strip to a low, dim brightness
+      analogWrite(GATE_PIN, LEVEL_LOW);
+      // Button 3 pressed...
+    } else if (code == BTN_3) {
+      // ...set the strip to full brightness
+      analogWrite(GATE_PIN, LEVEL_HIGH);
+    }
+
+    // Tell the IRremote library the code has been handled and it should listen for the next press
+    IrReceiver.resume();
+  }
+}
+</code></pre>
+
+<h2>Circuit in action</h2>
+<figure>
+  <img src="a5_demo.gif" alt="Animated GIF: pressing buttons on the IR remote switches the 12V LED strip between full brightness, a dim level, and off; the IR receiver's small red LED blinks with each press.">
+  <figcaption>Pressing buttons on the remote switches the 12&nbsp;V strip between full brightness (3, <code>analogWrite(9, 255)</code>), dim (2, <code>analogWrite(9, 90)</code>) and off (1, <code>analogWrite(9, 0)</code>). The small red LED on the IR receiver module blinks each time it picks up a press. The strip runs entirely on the 12&nbsp;V adapter's power while the Arduino stays on USB; the only thing the Arduino sends to the load side is the PWM signal on the MOSFET's Gate.</figcaption>
+</figure>
+
+<h2>Additional questions</h2>
+
+<h3>1. Maximum current between pins 2 and 3 of the MOSFET</h3>
+<p>My transistor's body reads <strong>IRLZ44N</strong>. In its TO-220 package, <strong>pin 1 is Gate, pin 2 is Drain, and pin 3 is Source</strong>, so the current between pins 2 and 3 is the drain current, I<sub>D</sub>. Per the <a href="https://www.infineon.com/assets/row/public/documents/24/49/infineon-irlz44n-datasheet-en.pdf">Infineon IRLZ44N datasheet's</a> absolute maximum ratings table, the continuous drain current is <strong>47&nbsp;A at T<sub>C</sub>&nbsp;=&nbsp;25&deg;C</strong> (derated to 33&nbsp;A at 100&deg;C case temperature, with a 160&nbsp;A pulsed/surge rating). 47&nbsp;A is the headline absolute-maximum figure.</p>
+
+<h3>2. Arduino + DC motor + flyback diode</h3>
+<figure>
+  <img src="a5_q2_schematic_hand.jpg" alt="Hand-drawn schematic for question 2: the Arduino Uno box lists Pin ~6 and GND. Pin ~6 goes through R1 = 220 ohms to the Gate of a circled IRLZ44N MOSFET, with R2 = 10 kilohms from the Gate to ground. The MOSFET's Drain goes up to a DC motor (a circle with M) whose other side goes to 6V motor supply plus. A 1N4001 flyback diode is connected across the motor with its bar toward 6V. The Source, R2 and the Arduino GND share one ground line with a ground symbol labeled Arduino GND and 6V supply minus.">
+  <figcaption>Same low-side-switch topology as the main circuit, reusing the IRLZ44N. The flyback diode D1 sits in parallel with the motor, reverse-biased during normal spinning. When the MOSFET switches off, the motor's inductance keeps current flowing and its back-EMF reverses the voltage across it; D1 then conducts and gives that current a safe path to decay through, clamping the voltage spike that would otherwise appear across the MOSFET's Drain and could destroy it.</figcaption>
+</figure>
+<table>
+  <tr><th>Component</th><th>Part</th><th>Datasheet</th></tr>
+  <tr><td>Arduino</td><td>Arduino Uno Rev3</td><td><a href="https://docs.arduino.cc/resources/datasheets/A000066-datasheet.pdf">docs.arduino.cc</a></td></tr>
+  <tr><td>DC motor</td><td>Adafruit DC Toy/Hobby Motor &ndash; 130 size (4.5&ndash;9&nbsp;VDC)</td><td><a href="https://www.adafruit.com/product/711">Adafruit product page</a> / <a href="https://datasheet.sic-components.com/711_Web.pdf">datasheet PDF</a></td></tr>
+  <tr><td>Flyback diode</td><td>1N4001 rectifier diode</td><td><a href="https://www.radiolocman.com/datasheet/pdf.html?di=35390">ON Semiconductor 1N4001&ndash;1N4007 datasheet</a></td></tr>
+  <tr><td>N-MOSFET</td><td>IRLZ44N (same part as the main circuit)</td><td><a href="https://www.infineon.com/assets/row/public/documents/24/49/infineon-irlz44n-datasheet-en.pdf">Infineon datasheet</a></td></tr>
+</table>
+<p>Why these parts and values:</p>
+<ul>
+  <li><strong>Motor and supply.</strong> The 130-size motor is rated 6&nbsp;V (4.5&ndash;9&nbsp;V range) and draws at most 70&nbsp;mA with no load and <strong>500&nbsp;mA when stalled</strong> (<a href="https://core-electronics.com.au/dc-toy-hobby-motor-130-size.html">Core Electronics listing for Adafruit 711</a>). So the external supply is 6&nbsp;V, separate from the Arduino's 5&nbsp;V, and every other part is sized for the 500&nbsp;mA worst case.</li>
+  <li><strong>IRLZ44N.</strong> 500&nbsp;mA is about 1% of its 47&nbsp;A continuous rating (0.5&nbsp;A / 47&nbsp;A &asymp; 1.1%), and it's logic-level, so D6 can drive it directly.</li>
+  <li><strong>1N4001 flyback diode.</strong> It's rated for 1&nbsp;A average forward current and 50&nbsp;V reverse voltage. When the MOSFET turns off, the diode carries the motor's current, which is at most the 500&nbsp;mA stall current (half its rating). While the motor runs, it blocks the 6&nbsp;V supply, far below 50&nbsp;V.</li>
+  <li><strong>D6, R1 = 220&nbsp;&Omega; and R2 = 10&nbsp;k&Omega;.</strong> D6 is a PWM pin (Timer0), so <code>analogWrite()</code> could set the motor's speed. The resistors are the same values for the same reasons as the main circuit: the Gate and the Arduino pin are identical, and only the load changed.</li>
+</ul>
+
+<h3>3. Arduino + L293D + two motors</h3>
+<figure>
+  <img src="a5_q3_schematic_hand.jpg" alt="Hand-drawn schematic for question 3: the L293D drawn as a tall box with pins in datasheet order, 1 to 8 down the left and 16 to 9 down the right. Left side: 1,2EN to 5V, 1A to Pin 2, 1Y and 2Y to Motor A, two GND pins each with a ground symbol, 2A to Pin 3, VCC2 to Motor Power 6V. Right side: VCC1 to Logic Power 5V, 4A to Pin 5, 4Y and 3Y to Motor B, two GND pins each with a ground symbol, 3A to Pin 4, 3,4EN to 5V.">
+  <figcaption>The L293D's own logic supply (VCC1, pin&nbsp;16) comes from the Arduino's 5&nbsp;V, while the motor supply (VCC2, pin&nbsp;8) comes from a separate external supply &mdash; the same logic-power/load-power separation as the rest of this assignment. Both EN pins are tied high so the chip is always enabled; direction is set purely by the four input pins. The ground symbols at pins 4, 5, 12 and 13 are all one shared ground: the L293D's GND pins, the Arduino's GND and the 6&nbsp;V motor supply's &minus; terminal are connected together, so the Arduino's input signals and the motor current share the same 0&nbsp;V reference.</figcaption>
+</figure>
+<p>Why these parts and values:</p>
+<ul>
+  <li><strong>L293D.</strong> Per the <a href="https://www.ti.com/product/L293D">TI L293D datasheet</a>, each channel can supply 600&nbsp;mA continuously (1.2&nbsp;A peak), and the motor supply VCC2 can be 4.5&ndash;36&nbsp;V. The same 130-size motor from Question 2 draws at most 500&nbsp;mA even when stalled, so the chip can drive it in every case.</li>
+  <li><strong>Motor supply: 6&nbsp;V</strong>, the motor's rated voltage, which is inside VCC2's 4.5&ndash;36&nbsp;V range. VCC1 uses the Arduino's 5&nbsp;V, since it only powers the chip's logic.</li>
+  <li><strong>D2&ndash;D5</strong> only need to be plain digital outputs, because the EN pins are tied high and the inputs only set direction. They skip D0 and D1, which the Uno uses for USB serial.</li>
+  <li><strong><code>wait(2000)</code></strong>: each step lasts 2 seconds so you can clearly see each direction before the next change. The exact time isn't critical.</li>
+</ul>
+<pre><code>// direction for Motor A is set by the pair (IN_A1, IN_A2); Motor B by (IN_B1, IN_B2)
+function motorA_forward()  { set IN_A1 = HIGH, IN_A2 = LOW }
+function motorA_backward() { set IN_A1 = LOW,  IN_A2 = HIGH }
+function motorB_forward()  { set IN_B1 = HIGH, IN_B2 = LOW }
+function motorB_backward() { set IN_B1 = LOW,  IN_B2 = HIGH }
+
+set EN1,2 = HIGH, EN3,4 = HIGH   // enable both H-bridge channels
+
+// both motors forward
+motorA_forward(); motorB_forward(); wait(2000)
+
+// both motors backward
+motorA_backward(); motorB_backward(); wait(2000)
+
+// motor A forward, motor B backward
+motorA_forward(); motorB_backward(); wait(2000)
+
+// motor A backward, motor B forward
+motorA_backward(); motorB_forward(); wait(2000)
+</code></pre>
+
+<h3>4. AI use</h3>
+<p>I used Claude to help me pick an idea, to choose component values (the brightness levels), working through the gate-voltage-divider and current/power calculations, looking up and verifying the exact numbers from the IRLZ44N datasheet (pin numbering, absolute maximum current, R<sub>DS(on)</sub>, V<sub>GS(th)</sub>) since I didn't want to guess at datasheet figures, checking the three schematic diagrams, drafting and commenting the Arduino sketch, drafting my answers to Q1-3, turning demo into a GIF, finding real datasheet links for Question 2's parts, and laying out this page in HTML. I built and tested the circuit, chose and confirmed the pins, and took the photos and video myself.</p>
+
+<p><strong>Reflection:</strong> Claude is very helpful in laying out this page in html, checking my work, and seeing if I missed anything. I also double checked the html output to check for errors.</p>
+
+<p><strong>Prompts I used:</strong></p>
+<ul>
+  <li>&ldquo;Check my circuit that uses an N-MOSFET to control load power separate from logic power, using my IRLZ44N, an IR remote for input, and a 12V LED strip for output&rdquo;</li>
+  <li>&ldquo;Check the IRLZ44N datasheet for the exact absolute maximum drain current and pin numbering&rdquo;</li>
+  <li>&ldquo;Check all my calculations referencing these datasheets...&rdquo;</li>
+  <li>&ldquo;Make my answers formal, fix grammar, and check my work&rdquo;</li>
+</ul>
+
+</body>
+</html>
