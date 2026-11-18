@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Final Project Proposal</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; line-height: 1.6; color: #222; background: #fff; }
+  h1 { margin-bottom: 0; }
+  .sub { color: #666; margin-top: 4px; }
+  h2 { margin-top: 48px; border-bottom: 2px solid #eee; padding-bottom: 4px; }
+  figure { margin: 24px 0; }
+  figure img { width: 100%; height: auto; border: 1px solid #ddd; border-radius: 6px; }
+  figcaption { font-size: 0.95em; color: #444; margin-top: 8px; }
+  table { border-collapse: collapse; margin: 16px 0; width: 100%; }
+  th, td { border: 1px solid #ddd; padding: 6px 12px; text-align: left; vertical-align: top; }
+  th { background: #f6f8fa; }
+  .pitch { background: #f6f8fa; border-left: 4px solid #1f4e79; padding: 12px 18px; margin: 16px 0; }
+  a { color: #1f4e79; }
+</style>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to home</a></p>
+<h1>Final Project Proposal</h1>
+<p class="sub">HCDE 439 Physical Computing &middot; Autumn 2026 &middot; Annie Lam</p>
+
+<figure>
+  <img src="p0_proposal_slide.png" alt="Proposal slide for Thwack: project concept, bill of materials, timeline and contingency plan, and a labeled sketch of the enclosure showing the ultrasonic sensor, white LED strip, accelerometer, RGB LED and passive buzzer.">
+  <figcaption>My proposal slide from the class deck.</figcaption>
+</figure>
+
+<h2>Project concept and motivation</h2>
+<div class="pitch">
+  <strong>Thwack</strong> is a tiny air-percussion toy that helps anyone feel like a drummer without owning drums. It responds to a hand swipe over its ultrasonic sensor by triggering a drum hit with a matching light flash, and crashes a &ldquo;cymbal&rdquo; sound and flash when you shake it.
+</div>
+<p>Most of my assignments so far have been about light and timing (twinkling LEDs, a beat-synced light show, an LED strip dimmer). Thwack turns that into something you can play: your own gestures trigger the sound and light, instead of a fixed sequence in the code.</p>
+
+<h2>Inputs and outputs</h2>
+<table>
+  <tr><th>Type</th><th>Part</th><th>What it does</th></tr>
+  <tr><td>Sensor</td><td>Ultrasonic sensor (HC-SR04)</td><td>Measures how close your hand is. A quick swipe within range triggers a drum hit.</td></tr>
+  <tr><td>Sensor</td><td>Accelerometer (GY-521 / MPU-6050, over I2C)</td><td>Detects a shake, which triggers a cymbal crash.</td></tr>
+  <tr><td>Actuator</td><td>Passive buzzer</td><td>Plays a different pitch for each kind of hit.</td></tr>
+  <tr><td>Actuator</td><td>12V white LED strip, switched by an N-MOSFET</td><td>Flashes a different pattern for each hit: a quick pop for a drum hit, a strobe burst for the crash.</td></tr>
+  <tr><td>Actuator</td><td>RGB LED</td><td>Shows a different color for each kind of hit.</td></tr>
+</table>
+
+<h2>Anticipated bill of materials</h2>
+<ul>
+  <li><strong>Ultrasonic sensor</strong> (swipe/hit detection)</li>
+  <li><strong>Accelerometer</strong> (shake/crash detection)</li>
+  <li><strong>Passive buzzer</strong> (pitch per hit type)</li>
+  <li><strong>RGB LED</strong> (different color per hit type)</li>
+  <li><strong>12V LED strip + IRLZ44N MOSFET</strong> (flash pattern per hit)</li>
+  <li><strong>Arduino Uno</strong> (controller)</li>
+  <li><strong>Resistors</strong> (220&nbsp;&Omega; for the MOSFET gate and RGB LED, 10&nbsp;k&Omega; gate pulldown)</li>
+  <li><strong>Small enclosure</strong> (so it's a product, not a breadboard)</li>
+  <li><strong>12V DC adapter</strong> (powers the LED strip, and the Arduino through its barrel jack)</li>
+</ul>
+
+<h2>Timeline</h2>
+<table>
+  <tr><th>Dates</th><th>Milestone</th></tr>
+  <tr><td>Nov 16&ndash;22</td><td>Wire and test each sensor on its own</td></tr>
+  <tr><td>Nov 23&ndash;29</td><td>Tune the swipe and shake thresholds; assign a tone, flash and color to each hit</td></tr>
+  <tr><td>Nov 30&ndash;Dec 6</td><td>Build the enclosure, polish, and write documentation</td></tr>
+  <tr><td>Dec 7&ndash;8</td><td>Rehearse and present</td></tr>
+  <tr><td>Dec 10</td><td>Live demo</td></tr>
+</table>
+
+<h2>Contingency plan</h2>
+<ul>
+  <li>If the ultrasonic sensor is too jittery for a clean swipe, I'll fall back to one button per drum pad. The hit logic stays the same.</li>
+  <li>If the accelerometer or its I2C wiring is unreliable, I'll fall back to a tilt switch for the crash.</li>
+</ul>
+</body>
+</html>
