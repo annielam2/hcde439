@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A6: Firefly Jar</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 860px; margin: 0 auto; padding: 24px 16px 64px; line-height: 1.6; color: #222; background: #fff; }
+  h1 { margin-bottom: 0; }
+  .sub { color: #666; margin-top: 4px; }
+  h2 { margin-top: 48px; border-bottom: 2px solid #eee; padding-bottom: 4px; }
+  h3 { margin-top: 32px; }
+  figure { margin: 24px 0; }
+  figure img { width: 100%; height: auto; border: 1px solid #ddd; border-radius: 6px; }
+  figcaption { font-size: 0.95em; color: #444; margin-top: 8px; }
+  pre { background: #f6f8fa; border: 1px solid #ddd; border-radius: 6px; padding: 16px; overflow-x: auto; font-size: 0.85em; line-height: 1.45; }
+  table { border-collapse: collapse; margin: 16px 0; width: 100%; }
+  th, td { border: 1px solid #ddd; padding: 6px 12px; text-align: left; }
+  th { background: #f6f8fa; }
+  .todo { background: #fff4d6; border: 1px dashed #d4a017; border-radius: 6px; padding: 12px 16px; margin: 16px 0; }
+  .calc { background: #f6f8fa; border: 1px solid #ddd; border-radius: 6px; padding: 14px 18px; margin: 14px 0; font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.92em; }
+  a { color: #1f4e79; }
+  .cta { display: inline-block; background: #1f4e79; color: #fff; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; }
+  pre { max-height: 640px; }
+</style>
+</head>
+<body>
+<p><a href="index.html">&larr; Back to home</a></p>
+<h1>Assignment 6: Firefly Jar</h1>
+<p class="sub">HCDE 439 Physical Computing &middot; Arduino &harr; web page over Web Serial</p>
+
+<p>This is the web sequel to my <a href="a2.html">A2 Firefly Jar</a>. Firefly Jar is now a small night-time game that lives half on screen and half on my desk. In daylight the sky is empty. When I <strong>cover the photoresistor</strong> with my hand, the sky on the page fades to night, stars come out and glowing fireflies start drifting in. I steer a glass jar around the screen with the <strong>joystick</strong> to catch them. Each firefly I catch changes the <strong>real RGB LED</strong> on my breadboard: the LED glows in the mixed color of every firefly in the jar, gets brighter the fuller the jar is, and gently pulses like a firefly. Clicking the mouse "taps the glass," which makes the real LED flash white and the fireflies on screen startle. Pressing the joystick button (or SPACE) opens the jar: the fireflies fly away on screen and the LED goes dark.</p>
+
+<p><a class="cta" href="a6-web/index.html">Open the Firefly Jar page &rarr;</a></p>
+<p>Use Chrome or Edge (Web Serial only works in Chromium browsers), plug in the Arduino running the firmware below, then click <em>Connect to Arduino</em>.</p>
+
+<table>
+  <tr><th>Direction</th><th>What you do</th><th>What happens</th></tr>
+  <tr><td>Arduino &rarr; Web</td><td>Cover / uncover the photoresistor</td><td>Sky turns night / day; fireflies appear or fly off</td></tr>
+  <tr><td>Arduino &rarr; Web</td><td>Push the joystick (X and Y)</td><td>Jar moves around the screen</td></tr>
+  <tr><td>Arduino &rarr; Web</td><td>Press the joystick button</td><td>Jar opens, fireflies released</td></tr>
+  <tr><td>Web &rarr; Arduino</td><td>Catch fireflies</td><td>Real LED glows in their mixed color, brighter as the jar fills</td></tr>
+  <tr><td>Web &rarr; Arduino</td><td>Click the mouse</td><td>Real LED flashes white for 150&nbsp;ms</td></tr>
+  <tr><td>Web &rarr; Arduino</td><td>Press SPACE</td><td>Jar opens, real LED turns off</td></tr>
+</table>
+<p>That's <strong>four inputs from two input devices</strong> (joystick X, joystick Y, joystick button, photoresistor) and <strong>one output device</strong> (the RGB LED).</p>
+
+<h2>Schematic</h2>
+<figure>
+  <img src="a6_schematic.svg" alt="Schematic: joystick +5V, GND, SW, VRx, VRy to Arduino 5V, GND, D2, A0, A1. Photoresistor from +5V to A2, with a 10k resistor from A2 to ground. D9, D10, D11 each through a 220 ohm resistor to the red, green and blue legs of a common-cathode RGB LED whose common leg goes to ground.">
+  <figcaption><strong>Joystick (left):</strong> the module is two 10&nbsp;k&Omega; potentiometers plus a push button. Its +5V and GND go to the Arduino's 5V and GND so each pot works as a voltage divider; the wipers (VRx, VRy) go to analog pins A0 and A1 because they produce a range of voltages, not just on/off. The button (SW) goes to digital pin D2 and connects to ground when pressed. I didn't add an external resistor because the firmware turns on the Arduino's <code>INPUT_PULLUP</code> resistor, which holds D2 at 5&nbsp;V until the button pulls it to 0&nbsp;V.<br><br>
+  <strong>Photoresistor (bottom left):</strong> the Arduino can only measure voltage, not resistance, so I put the photoresistor in series with a fixed 10&nbsp;k&Omega; resistor between 5&nbsp;V and ground. The voltage at the point between them (V<sub>out</sub>) changes with the light, and that point goes to A2. I chose 10&nbsp;k&Omega; because it's close to the photoresistor's resistance in normal room light, which puts the reading near the middle of the range where it's most sensitive.<br><br>
+  <strong>RGB LED (right):</strong> my RGB LED is common cathode (one shared negative leg), so the shared leg goes to ground and each color leg gets its own pin. I used D9, D10 and D11 because they're PWM pins (marked ~), which lets <code>analogWrite()</code> mix any color. Each color has its own 220&nbsp;&Omega; resistor so each LED's current is limited separately.</figcaption>
+</figure>
+
+<h2>Calculations</h2>
+
+<h3>RGB LED resistors</h3>
+<p>Each color is its own LED, so I use R = (V<sub>supply</sub> &minus; V<sub>f</sub>) / I for each. The red die in an RGB LED drops about 2.0&nbsp;V; the green and blue dies drop about 3.0&nbsp;V. Red has the lowest V<sub>f</sub>, so it needs the biggest resistor: (5&nbsp;&minus;&nbsp;2.0)&nbsp;V / 0.020&nbsp;A = 150&nbsp;&Omega; minimum. I used 220&nbsp;&Omega; on all three to stay safely under 20&nbsp;mA:</p>
+<table>
+  <tr><th>Color</th><th>V<sub>f</sub></th><th>I = (5 &minus; V<sub>f</sub>) / 220&nbsp;&Omega;</th></tr>
+  <tr><td>Red (D9)</td><td>~2.0 V</td><td>3.0 / 220 = <strong>13.6 mA</strong></td></tr>
+  <tr><td>Green (D10)</td><td>~3.0 V</td><td>2.0 / 220 = <strong>9.1 mA</strong></td></tr>
+  <tr><td>Blue (D11)</td><td>~3.0 V</td><td>2.0 / 220 = <strong>9.1 mA</strong></td></tr>
+</table>
+<p>Even at full white (the tap flash) the LED draws about 32&nbsp;mA total, well under the Uno's limits. These are the maximums: <code>analogWrite(pin, value)</code> turns the pin on for value/255 of the time (PWM), so a value of 128 averages about half that current and looks about half as bright.</p>
+
+<h3>Photoresistor (A2)</h3>
+<p>The photoresistor (R<sub>photo</sub>) is on top and the 10&nbsp;k&Omega; resistor is on the bottom, so the voltage divider formula is V<sub>out</sub> = 5&nbsp;V &times; 10&nbsp;k&Omega; / (R<sub>photo</sub> + 10&nbsp;k&Omega;). <code>analogRead()</code> turns 0&ndash;5&nbsp;V into 0&ndash;1023, so the reading = 1023 &times; V<sub>out</sub> / 5&nbsp;V = 1023 &times; 10&nbsp;k&Omega; / (R<sub>photo</sub> + 10&nbsp;k&Omega;). Its resistance drops in light, so <strong>brighter = higher reading</strong>:</p>
+<table>
+  <tr><th>Condition</th><th>R<sub>photo</sub> (approx.)</th><th>V<sub>out</sub></th><th>analogRead</th></tr>
+  <tr><td>Bright desk lamp</td><td>1 k&Omega;</td><td>4.55 V</td><td>~930</td></tr>
+  <tr><td>Normal room light</td><td>10 k&Omega;</td><td>2.50 V</td><td>~512</td></tr>
+  <tr><td>Hand cupped over it</td><td>50 k&Omega;</td><td>0.83 V</td><td>~171</td></tr>
+  <tr><td>Fully dark</td><td>200 k&Omega;</td><td>0.24 V</td><td>~49</td></tr>
+</table>
+<p>From these numbers I set <code>DAY_READING = 500</code> and <code>NIGHT_READING = 200</code> in the sketch. The page maps the reading from 500&rarr;200 onto a <em>darkness</em> value from 0&rarr;1 (and clamps anything outside that range), so room light is full day and a covered sensor is full night. Darkness controls the sky color and how many fireflies are out (darkness &times; 14).</p>
+<p><strong>My measurements:</strong> in my room the sensor read about <strong>560</strong> uncovered and about <strong>158</strong> with my hand cupped over it. Working the divider formula backwards, R<sub>photo</sub> = 10&nbsp;k&Omega; &times; (1023 / reading &minus; 1), so 560 means about <strong>8.3&nbsp;k&Omega;</strong> and 158 means about <strong>55&nbsp;k&Omega;</strong>, close to the estimates in the table. That puts <code>DAY_READING = 500</code> and <code>NIGHT_READING = 200</code> just inside my measured range: uncovered (560) is full day and covered (158) reaches full night, with 40&ndash;60 counts of margin in case the room gets a little dimmer or my hand doesn't block all the light.</p>
+
+<h3>Joystick (A0, A1)</h3>
+<p>Each joystick axis is a 10&nbsp;k&Omega; potentiometer from 5&nbsp;V to ground, so its wiper gives 0&ndash;5&nbsp;V and reads 0&ndash;1023. At rest the wiper is in the middle: 2.5&nbsp;V &rarr; 1023 &times; 2.5 / 5 &asymp; <strong>512</strong>. The sketch subtracts 512 to get how far the stick is pushed (about &minus;512 to +511). Real joysticks don't rest at exactly 512, so anything within &plusmn;60 of center (about 12% of the travel) counts as zero to stop the jar from drifting. Then <code>map(dx, -512, 512, -9, 9)</code> turns the push into a speed of up to 9 pixels per frame; at ~60 frames per second that's about 540 pixels per second at full tilt. This moves the jar <em>relative</em> to where it is, rather than jumping it to an absolute position.</p>
+
+<h3>Joystick button (D2)</h3>
+<p>With <code>INPUT_PULLUP</code>, D2 reads HIGH (1) when the button is up and LOW (0) when pressed, which is backwards from what you'd expect, so the firmware sends <code>1</code> when it reads LOW. The page only releases the fireflies on the frame the button changes from 0 to 1, so holding it down doesn't keep re-triggering.</p>
+
+<h3>Serial messages</h3>
+<p>Both directions use plain text at 9600 baud. Each character takes 10 bits (start + 8 data + stop), or about 1.04&nbsp;ms.</p>
+<ul>
+  <li><strong>Arduino &rarr; Web</strong>: <code>x,y,light,button</code>, e.g. <code>512,498,431,0</code>, every 50&nbsp;ms (20 times a second). The longest possible line is <code>1023,1023,1023,1</code> plus <code>\r\n</code> = 18 characters &asymp; 18.8&nbsp;ms, which fits comfortably in the 50&nbsp;ms gap.</li>
+  <li><strong>Web &rarr; Arduino</strong>: <code>r,g,b</code>, e.g. <code>140,107,51</code>, only when the color changes (on a catch, release or tap), not every frame. The longest message, <code>255,255,255\n</code>, is 12 characters &asymp; 12.5&nbsp;ms. The Arduino reads the three numbers with <code>Serial.parseInt()</code> and only uses them if the message ends with a newline, so half-received messages are ignored.</li>
+</ul>
+<p><strong>The LED color</strong> is the average of the caught fireflies' colors, scaled by how full the jar is: brightness = map(count, 1, 8, 0.3, 1). For example, one amber (255,190,40) and one lime (170,255,60) firefly average to (212.5,222.5,50); with 2 of 8 fireflies the level is 0.3 + 0.7 &times; 1/7 = 0.4, so the page sends <code>85,89,20</code>. On the Arduino, that color is multiplied by 0.775&nbsp;+&nbsp;0.225&nbsp;&times;&nbsp;sin(millis/300), which swings between 0.55 and 1.0 about every 2&pi; &times; 300&nbsp;ms &asymp; 1.9&nbsp;s, so the LED breathes like a firefly without the page needing to send anything.</p>
+
+<h2>Circuit</h2>
+<figure>
+  <img src="a6_circuit_photo.jpg" alt="Photo of the Firefly Jar circuit: Arduino Uno, joystick module, photoresistor with 10k resistor, and an RGB LED with three 220 ohm resistors">
+  <figcaption>My real circuit on the Elegoo Uno R3, wired to match the schematic above. The Arduino's 5V and GND come over to the top rails on the left, and the orange and green jumpers on the far right connect the top rails to the bottom rails. Three jumpers (red, green and blue) carry D9, D10 and D11 to the three 220&nbsp;&Omega; resistors next to the RGB LED, and a black jumper runs from the LED's common cathode to the GND rail. The photoresistor and the 10&nbsp;k&Omega; resistor are in the bottom-left corner: the orange loop brings +5&nbsp;V to the photoresistor, and the wire from the column they share goes back to A2. The joystick sits off the board on female-to-male jumpers: its +5V and GND go to the rails and SW, VRy and VRx go to D2, A1 and A0. </figcaption>
+</figure>
+
+<h2>Firefly Jar in action</h2>
+<figure>
+  <img src="a6_demo.gif" alt="Animated GIF of covering the photoresistor, steering the jar with the joystick to catch fireflies, and the real RGB LED changing color">
+  <figcaption>Firefly Jar running with the Arduino connected over Web Serial. When I cover the photoresistor, the page's sky turns from day to night and fireflies come out; when I uncover it, it goes back to day. I steer the jar with the joystick to catch fireflies, and the real RGB LED on the breadboard lights up in the color of the fireflies in the jar. Pressing the joystick button lets them go and the LED turns off. (Converted from my phone video to a GIF at 7 frames per second so the page loads quickly.)</figcaption>
+</figure>
+
+<h2>Firmware</h2>
+<p>File: <a href="https://github.com/annielam2/hcde439/blob/main/a6/a6.ino">a6/a6.ino</a>. The loop never uses <code>delay()</code>: it checks for an incoming color, updates the LED's pulsing glow, and uses <code>millis()</code> to send sensor readings every 50&nbsp;ms, so reading, glowing and sending all happen smoothly together.</p>
+<pre><code>// A6 &quot;Firefly Jar&quot; firmware
+// Sends the joystick, photoresistor and joystick button to the web page,
+// and lights the RGB LED in whatever color the web page tells it to.
+
+// Analog pin wired to the joystick&#x27;s left/right wiper (VRx)
+const int JOY_X_PIN = A0;
+// Analog pin wired to the joystick&#x27;s up/down wiper (VRy)
+const int JOY_Y_PIN = A1;
+// Analog pin wired to the middle of the photoresistor / 10k voltage divider
+const int LIGHT_PIN = A2;
+// Digital pin wired to the joystick&#x27;s push button (SW)
+const int BUTTON_PIN = 2;
+// PWM pin driving the RGB LED&#x27;s red leg through a 220 ohm resistor
+const int RED_PIN = 9;
+// PWM pin driving the RGB LED&#x27;s green leg through a 220 ohm resistor
+const int GREEN_PIN = 10;
+// PWM pin driving the RGB LED&#x27;s blue leg through a 220 ohm resistor
+const int BLUE_PIN = 11;
+
+// How often (in milliseconds) to send sensor readings to the web page: 20 times a second
+const unsigned long SEND_INTERVAL = 50;
+// The millis() time when readings were last sent
+unsigned long lastSend = 0;
+
+// Red brightness (0-255) most recently requested by the web page
+int jarRed = 0;
+// Green brightness (0-255) most recently requested by the web page
+int jarGreen = 0;
+// Blue brightness (0-255) most recently requested by the web page
+int jarBlue = 0;
+
+// setup() runs once when the board powers on or resets
+void setup() {
+  // Open serial at 9600 baud; the web page must use the same speed
+  Serial.begin(9600);
+  // Only wait up to 20 ms for the rest of a number so loop() never stalls for long
+  Serial.setTimeout(20);
+  // Use the Arduino&#x27;s built-in pull-up resistor so the button reads HIGH until pressed
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  // Make the red LED pin an output
+  pinMode(RED_PIN, OUTPUT);
+  // Make the green LED pin an output
+  pinMode(GREEN_PIN, OUTPUT);
+  // Make the blue LED pin an output
+  pinMode(BLUE_PIN, OUTPUT);
+}
+
+// loop() runs over and over forever
+void loop() {
+  // ---- Web -&gt; Arduino: receive a color as text like &quot;255,200,40\n&quot; ----
+  // Only try to read if at least one character has arrived from the web page
+  if (Serial.available() &gt; 0) {
+    // Read the first number in the message (red)
+    int r = Serial.parseInt();
+    // Read the second number in the message (green)
+    int g = Serial.parseInt();
+    // Read the third number in the message (blue)
+    int b = Serial.parseInt();
+    // Only accept the color if the message ends with a newline, i.e. it arrived complete
+    if (Serial.read() == &#x27;\n&#x27;) {
+      // Store red, clamped to the 0-255 range analogWrite accepts
+      jarRed = constrain(r, 0, 255);
+      // Store green, clamped to 0-255
+      jarGreen = constrain(g, 0, 255);
+      // Store blue, clamped to 0-255
+      jarBlue = constrain(b, 0, 255);
+    }
+  }
+
+  // ---- Make the LED glow like a firefly ----
+  // Read the current time in milliseconds
+  unsigned long now = millis();
+  // Brightness multiplier that gently pulses between 0.55 and 1.0 about every 1.9 s (2*pi*300 ms)
+  float glow = 0.775 + 0.225 * sin(now / 300.0);
+  // Set the red brightness: requested color times the pulse
+  analogWrite(RED_PIN, (int)(jarRed * glow));
+  // Set the green brightness: requested color times the pulse
+  analogWrite(GREEN_PIN, (int)(jarGreen * glow));
+  // Set the blue brightness: requested color times the pulse
+  analogWrite(BLUE_PIN, (int)(jarBlue * glow));
+
+  // ---- Arduino -&gt; Web: send &quot;x,y,light,button\n&quot; every 50 ms ----
+  // Only send once at least SEND_INTERVAL ms have passed since the last send
+  if (now - lastSend &gt;= SEND_INTERVAL) {
+    // Remember when this send happened
+    lastSend = now;
+    // Send the joystick&#x27;s left/right reading (0-1023, about 512 at rest)
+    Serial.print(analogRead(JOY_X_PIN));
+    // Comma separates the values so the web page can split them apart
+    Serial.print(&quot;,&quot;);
+    // Send the joystick&#x27;s up/down reading (0-1023, about 512 at rest)
+    Serial.print(analogRead(JOY_Y_PIN));
+    // Comma separator
+    Serial.print(&quot;,&quot;);
+    // Send the light reading (higher = brighter room, lower = darker)
+    Serial.print(analogRead(LIGHT_PIN));
+    // Comma separator
+    Serial.print(&quot;,&quot;);
+    // Send 1 if the button is pressed (pin pulled LOW) or 0 if not, then end the line
+    Serial.println(digitalRead(BUTTON_PIN) == LOW ? 1 : 0);
+  }
+}
+</code></pre>
+
+<h2>Web page code (p5.js)</h2>
+<p>Files: <a href="a6-web/index.html">a6/index.html</a> and <a href="a6-web/sketch.js">a6-web/sketch.js</a>. <code>setup()</code> runs once to create the canvas, serial port and stars; <code>draw()</code> runs about 60 times a second to read the Arduino, update the game and send the LED color. The serial helper functions at the bottom (<code>setupSerial</code>, <code>checkPort</code>, <code>onConnectButtonClicked</code>) follow the structure of the class p5-arduino examples; the game, interaction design and messaging are my own.</p>
+<h3>index.html</h3>
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;!-- Tell the browser this file is HTML --&gt;
+&lt;html lang=&quot;en&quot;&gt;
+  &lt;!-- The head holds settings and the scripts the page needs --&gt;
+  &lt;head&gt;
+    &lt;!-- Use UTF-8 text encoding --&gt;
+    &lt;meta charset=&quot;utf-8&quot; /&gt;
+    &lt;!-- Make the page fit phone and laptop screens --&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot; /&gt;
+    &lt;!-- Title shown in the browser tab --&gt;
+    &lt;title&gt;A6: Firefly Jar&lt;/title&gt;
+    &lt;!-- Remove the default margin and scrollbars so the canvas fills the window --&gt;
+    &lt;style&gt;body { margin: 0; overflow: hidden; background: #0a0f28; }&lt;/style&gt;
+    &lt;!-- Load the p5.js drawing library --&gt;
+    &lt;script src=&quot;https://cdn.jsdelivr.net/npm/p5@1.11.1/lib/p5.min.js&quot;&gt;&lt;/script&gt;
+    &lt;!-- Load p5.webserial, which wraps the browser&#x27;s Web Serial API for p5 --&gt;
+    &lt;script src=&quot;https://unpkg.com/@gohai/p5.webserial@^1/libraries/p5.webserial.js&quot;&gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;!-- The body is the visible page --&gt;
+  &lt;body&gt;
+    &lt;!-- Load my sketch, which has the setup() and draw() functions --&gt;
+    &lt;script src=&quot;sketch.js&quot;&gt;&lt;/script&gt;
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+<h3>sketch.js</h3>
+<pre><code>// A6 &quot;Firefly Jar&quot;: steer a jar with the joystick to catch fireflies.
+// Covering the photoresistor turns day into night (fireflies only come out in the dark).
+// The real RGB LED glows in the mixed color of the fireflies in the jar.
+
+// ---------- Settings ----------
+
+// Serial speed; must match Serial.begin(9600) in the firmware
+const BAUD_RATE = 9600;
+// Joystick resting value: the pot&#x27;s wiper sits at 2.5 V of 5 V, which reads 1023 * 2.5 / 5 = ~512
+const JOY_CENTER = 512;
+// Readings within this distance of center count as &quot;not moving&quot;, so a slightly off-center stick doesn&#x27;t drift
+const JOY_DEADZONE = 60;
+// Fastest the jar can move, in pixels per frame, when the stick is pushed all the way
+const JAR_MAX_SPEED = 9;
+// Light reading at or below this counts as full night (photoresistor covered); tune to your room
+const NIGHT_READING = 200;
+// Light reading at or above this counts as full day (normal room light); tune to your room
+const DAY_READING = 500;
+// Most fireflies flying free at full darkness
+const MAX_FREE = 14;
+// Most fireflies the jar can hold
+const MAX_JAR = 8;
+// Jar width in pixels
+const JAR_W = 110;
+// Jar height in pixels
+const JAR_H = 140;
+// How long (ms) the LED flashes white when you tap the glass with the mouse
+const FLASH_MS = 150;
+// Firefly colors: lime, amber, sky blue, pink (so the LED visibly mixes colors)
+const FIREFLY_COLORS = [[170, 255, 60], [255, 190, 40], [70, 190, 255], [255, 80, 200]];
+
+// ---------- State ----------
+
+// The serial port object from p5.webserial
+let port;
+// The Connect/Disconnect button
+let connectBtn;
+// The p5 canvas (used to ignore clicks on the button)
+let canvas;
+// Latest joystick left/right reading from the Arduino
+let joyX = JOY_CENTER;
+// Latest joystick up/down reading from the Arduino
+let joyY = JOY_CENTER;
+// Latest light reading from the Arduino; start at &quot;day&quot;
+let lightReading = DAY_READING;
+// Whether the joystick button is pressed right now
+let buttonDown = false;
+// Whether the joystick button was pressed last time we checked (to detect a new press)
+let buttonWasDown = false;
+// How dark it is: 0 = day, 1 = full night
+let darkness = 0;
+// Jar&#x27;s horizontal center position
+let jarX;
+// Jar&#x27;s vertical center position
+let jarY;
+// Fireflies flying free in the sky
+let freeFlies = [];
+// Fireflies caught in the jar
+let jarFlies = [];
+// Time (ms) until which the LED should flash white
+let flashUntil = 0;
+// The last color message sent to the Arduino, so we only send when it changes
+let lastSent = &quot;&quot;;
+// Star positions for the night sky
+let stars = [];
+
+// ---------- p5 setup and draw ----------
+
+// setup() runs once when the page loads
+function setup() {
+  // Make a canvas that fills the browser window
+  canvas = createCanvas(windowWidth, windowHeight);
+  // Create the serial port and the connect button
+  setupSerial();
+  // Start the jar in the middle of the screen, horizontally
+  jarX = width / 2;
+  // Start the jar a bit below the vertical middle
+  jarY = height * 0.6;
+  // Make 80 stars
+  for (let i = 0; i &lt; 80; i++) {
+    // Give each star a random position in the top 70% of the screen and a random twinkle offset
+    stars.push({ x: random(width), y: random(height * 0.7), phase: random(TWO_PI) });
+  }
+  // Center text horizontally and vertically on its position
+  textAlign(CENTER, CENTER);
+}
+
+// draw() runs about 60 times a second
+function draw() {
+  // If the Arduino is connected, read its latest sensor values
+  if (checkPort()) readArduino();
+  // Turn the light reading into darkness from 0 (day) to 1 (night)
+  darkness = constrain(map(lightReading, DAY_READING, NIGHT_READING, 0, 1), 0, 1);
+  // Move the jar with the joystick
+  moveJar();
+  // If the button just went from up to down, let the fireflies go
+  if (buttonDown &amp;&amp; !buttonWasDown) releaseFlies();
+  // Remember the button state for next frame
+  buttonWasDown = buttonDown;
+  // Add or remove free fireflies to match how dark it is
+  updateFlyCount();
+  // Move free fireflies and catch any inside the jar
+  updateFreeFlies();
+  // Draw the sky, stars and ground
+  drawScene();
+  // Draw each free firefly
+  for (let f of freeFlies) drawFly(f.x, f.y, f.col, f.phase, 1);
+  // Draw the jar and the fireflies in it
+  drawJar();
+  // Draw the instructions and raw sensor readings
+  drawHud();
+  // Tell the Arduino what color the LED should be
+  sendJarColor();
+}
+
+// ---------- Arduino -&gt; Web ----------
+
+// Read one line like &quot;512,498,431,0&quot; from the Arduino and store the values
+function readArduino() {
+  // Read everything up to the next newline (empty string if a full line hasn&#x27;t arrived)
+  let str = port.readUntil(&quot;\n&quot;);
+  // Nothing new arrived this frame, so keep the old values
+  if (str.length == 0) return;
+  // Remove the newline/whitespace and split on commas into four pieces
+  let arr = str.trim().split(&quot;,&quot;);
+  // Ignore partial or garbled lines that don&#x27;t have exactly four values
+  if (arr.length != 4) return;
+  // First value: joystick left/right (0-1023)
+  joyX = Number(arr[0]);
+  // Second value: joystick up/down (0-1023)
+  joyY = Number(arr[1]);
+  // Third value: light level (0-1023)
+  lightReading = Number(arr[2]);
+  // Fourth value: 1 means the button is pressed
+  buttonDown = arr[3] == &quot;1&quot;;
+}
+
+// Move the jar relative to its current position based on how far the stick is pushed
+function moveJar() {
+  // How far the stick is from center horizontally (about -512 to +511)
+  let dx = joyX - JOY_CENTER;
+  // How far the stick is from center vertically
+  let dy = joyY - JOY_CENTER;
+  // Inside the dead zone, treat horizontal as zero
+  if (abs(dx) &lt; JOY_DEADZONE) dx = 0;
+  // Inside the dead zone, treat vertical as zero
+  if (abs(dy) &lt; JOY_DEADZONE) dy = 0;
+  // Turn horizontal stick distance into a speed and move the jar
+  jarX += map(dx, -512, 512, -JAR_MAX_SPEED, JAR_MAX_SPEED);
+  // Turn vertical stick distance into a speed and move the jar
+  jarY += map(dy, -512, 512, -JAR_MAX_SPEED, JAR_MAX_SPEED);
+  // Keep the jar fully on screen left to right
+  jarX = constrain(jarX, JAR_W / 2, width - JAR_W / 2);
+  // Keep the jar fully on screen top to bottom
+  jarY = constrain(jarY, JAR_H / 2, height - JAR_H / 2);
+}
+
+// ---------- Fireflies ----------
+
+// Spawn or remove free fireflies so the count follows the darkness
+function updateFlyCount() {
+  // Target number of free fireflies: none in daylight, MAX_FREE at full night
+  let target = floor(darkness * MAX_FREE);
+  // If there are too few, sometimes add one (random so they trickle in, not all at once)
+  if (freeFlies.length &lt; target &amp;&amp; random() &lt; 0.05) freeFlies.push(makeFly(random(width), random(height * 0.75)));
+  // If there are too many (it got lighter), sometimes one flies away
+  if (freeFlies.length &gt; target &amp;&amp; random() &lt; 0.05) freeFlies.shift();
+}
+
+// Create a firefly object at (x, y) with a random direction and color
+function makeFly(x, y) {
+  // Return position, velocity, color and a random glow offset so they don&#x27;t blink in sync
+  return { x: x, y: y, vx: random(-1, 1), vy: random(-1, 1), col: random(FIREFLY_COLORS), phase: random(TWO_PI) };
+}
+
+// Move each free firefly and check whether the jar caught it
+function updateFreeFlies() {
+  // Loop backwards so removing a caught firefly doesn&#x27;t skip the next one
+  for (let i = freeFlies.length - 1; i &gt;= 0; i--) {
+    // The firefly being updated
+    let f = freeFlies[i];
+    // Nudge its horizontal speed randomly so it wanders
+    f.vx = constrain(f.vx + random(-0.15, 0.15), -1.6, 1.6);
+    // Nudge its vertical speed randomly so it wanders
+    f.vy = constrain(f.vy + random(-0.15, 0.15), -1.6, 1.6);
+    // Move horizontally
+    f.x += f.vx;
+    // Move vertically
+    f.y += f.vy;
+    // Bounce off the left or right edge
+    if (f.x &lt; 0 || f.x &gt; width) f.vx *= -1;
+    // Bounce off the top edge or the grass
+    if (f.y &lt; 0 || f.y &gt; height * 0.85) f.vy *= -1;
+    // Is the firefly inside the jar horizontally?
+    let insideX = abs(f.x - jarX) &lt; JAR_W / 2;
+    // Is the firefly inside the jar vertically?
+    let insideY = abs(f.y - jarY) &lt; JAR_H / 2;
+    // If it&#x27;s inside and the jar has room, catch it
+    if (insideX &amp;&amp; insideY &amp;&amp; jarFlies.length &lt; MAX_JAR) {
+      // Add it to the jar at a random spot inside, keeping its color
+      jarFlies.push({ rx: random(-JAR_W / 2 + 15, JAR_W / 2 - 15), ry: random(-JAR_H / 2 + 30, JAR_H / 2 - 15), col: f.col, phase: f.phase });
+      // Remove it from the sky
+      freeFlies.splice(i, 1);
+    }
+  }
+}
+
+// Open the jar: every caught firefly flies back into the sky
+function releaseFlies() {
+  // Go through each firefly in the jar
+  for (let j of jarFlies) {
+    // Make a free firefly at its on-screen spot (above the jar so it isn&#x27;t instantly re-caught)
+    let f = makeFly(jarX + j.rx, jarY - JAR_H / 2 - 20);
+    // Keep its color
+    f.col = j.col;
+    // Send it upward
+    f.vy = -1.6;
+    // Put it back in the sky
+    freeFlies.push(f);
+  }
+  // The jar is now empty, so the LED will go dark
+  jarFlies = [];
+}
+
+// ---------- Web -&gt; Arduino ----------
+
+// Work out what color the LED should be right now, as [red, green, blue] from 0-255
+function ledColor() {
+  // While a tap-flash is happening, the LED is full white
+  if (millis() &lt; flashUntil) return [255, 255, 255];
+  // An empty jar means the LED is off
+  if (jarFlies.length == 0) return [0, 0, 0];
+  // More fireflies = brighter jar: 1 firefly is 30% brightness, a full jar is 100%
+  let level = map(jarFlies.length, 1, MAX_JAR, 0.3, 1);
+  // Start with all three channels at zero
+  let rgb = [0, 0, 0];
+  // Do the same math for red (index 0), green (1) and blue (2)
+  for (let c = 0; c &lt; 3; c++) {
+    // Add up this color channel across all caught fireflies
+    let sum = 0;
+    // Go through each caught firefly
+    for (let j of jarFlies) sum += j.col[c];
+    // Average the channel, scale by brightness level, and round to a whole number for analogWrite
+    rgb[c] = round((sum / jarFlies.length) * level);
+  }
+  // Give back the mixed color
+  return rgb;
+}
+
+// Send the LED color to the Arduino as text &quot;r,g,b\n&quot;, but only when it changes
+function sendJarColor() {
+  // Can&#x27;t send if the Arduino isn&#x27;t connected
+  if (!port.opened()) return;
+  // Build the message, e.g. &quot;255,200,40\n&quot;
+  let msg = ledColor().join(&quot;,&quot;) + &quot;\n&quot;;
+  // If the color is the same as last time, don&#x27;t flood the serial line
+  if (msg == lastSent) return;
+  // Send the color to the Arduino
+  port.write(msg);
+  // Remember what we sent
+  lastSent = msg;
+}
+
+// Mouse click = tap the glass: the real LED flashes white and the fireflies startle
+function mousePressed(event) {
+  // Ignore clicks that weren&#x27;t on the canvas (like clicking the Connect button)
+  if (event &amp;&amp; event.target !== canvas.elt) return;
+  // Flash the LED for FLASH_MS milliseconds starting now
+  flashUntil = millis() + FLASH_MS;
+}
+
+// Keyboard: SPACE opens the jar and lets the fireflies go (same as the joystick button)
+function keyPressed() {
+  // Only respond to the space bar
+  if (key === &quot; &quot;) releaseFlies();
+}
+
+// ---------- Drawing ----------
+
+// Draw sky, stars and grass, all changing with the darkness
+function drawScene() {
+  // Blend the sky from daytime blue to night navy based on darkness
+  background(lerpColor(color(135, 195, 235), color(10, 15, 40), darkness));
+  // No outlines on stars
+  noStroke();
+  // Draw each star
+  for (let s of stars) {
+    // Stars fade in with darkness and twinkle slowly
+    fill(255, 255, 255, darkness * (150 + 100 * sin(frameCount * 0.03 + s.phase)));
+    // Draw the star as a small dot
+    circle(s.x, s.y, 2);
+  }
+  // Grass color blends from green to dark green with darkness
+  fill(lerpColor(color(90, 160, 70), color(15, 40, 25), darkness));
+  // Draw the grass along the bottom 15% of the screen
+  rect(0, height * 0.85, width, height * 0.15);
+}
+
+// Draw one glowing firefly at (x, y); scale makes jar flies glow a little bigger
+function drawFly(x, y, col, phase, scale) {
+  // Glow brightness pulses over time; the phase keeps fireflies out of sync
+  let a = 140 + 115 * sin(frameCount * 0.08 + phase);
+  // No outline
+  noStroke();
+  // Soft outer glow, mostly transparent
+  fill(col[0], col[1], col[2], a * 0.3);
+  // Draw the glow
+  circle(x, y, 24 * scale);
+  // Bright core
+  fill(col[0], col[1], col[2], a);
+  // Draw the core
+  circle(x, y, 7 * scale);
+}
+
+// Draw the jar, its glow, and the fireflies inside
+function drawJar() {
+  // Draw rectangles from their center so the jar is centered on (jarX, jarY)
+  rectMode(CENTER);
+  // If the jar has fireflies, draw a soft glow behind it in the mixed LED color
+  if (jarFlies.length &gt; 0) {
+    // No outline for the glow
+    noStroke();
+    // Use the same color as the real LED so the screen and the real world match
+    let rgb = ledColor();
+    // Glow color, transparent
+    fill(rgb[0], rgb[1], rgb[2], 70);
+    // Draw the glow a bit bigger than the jar
+    ellipse(jarX, jarY, JAR_W * 1.8, JAR_H * 1.5);
+  }
+  // Glass is a faint transparent white
+  fill(255, 255, 255, 40);
+  // Glass outline is light blue-white
+  stroke(220, 240, 255, 200);
+  // Outline thickness
+  strokeWeight(3);
+  // Jar body with rounded corners
+  rect(jarX, jarY, JAR_W, JAR_H, 18);
+  // Lid color: brass
+  fill(180, 140, 60);
+  // No outline on the lid
+  noStroke();
+  // Draw the lid at the top of the jar
+  rect(jarX, jarY - JAR_H / 2, JAR_W * 0.8, 14, 4);
+  // Go back to the default corner-based rectangles for other drawing
+  rectMode(CORNER);
+  // Draw each caught firefly
+  for (let j of jarFlies) {
+    // Bounce it slightly inside the jar so it looks alive
+    let wobbleX = 3 * sin(frameCount * 0.05 + j.phase);
+    // Bob it slightly up and down
+    let wobbleY = 3 * cos(frameCount * 0.04 + j.phase);
+    // Draw it a bit bigger, startled (bigger still) while a tap flash is happening
+    drawFly(jarX + j.rx + wobbleX, jarY + j.ry + wobbleY, j.col, j.phase, millis() &lt; flashUntil ? 1.8 : 1.2);
+  }
+}
+
+// Draw instructions, the jar count and the raw Arduino readings
+function drawHud() {
+  // No outline on text
+  noStroke();
+  // Text color: dark in the day, light at night
+  fill(darkness &gt; 0.5 ? 235 : 20);
+  // Instruction text size
+  textSize(16);
+  // Instructions across the top
+  text(&quot;Cover the light sensor to make it night | Joystick: move jar | Joystick button or SPACE: release | Click: tap the glass&quot;, width / 2, 70);
+  // Bigger text for the count
+  textSize(22);
+  // How many fireflies are in the jar
+  text(&quot;Fireflies in jar: &quot; + jarFlies.length + &quot; / &quot; + MAX_JAR, width / 2, 100);
+  // Small text for the readings
+  textSize(12);
+  // Raw readings, handy for calibrating NIGHT_READING / DAY_READING
+  text(&quot;x &quot; + joyX + &quot;   y &quot; + joyY + &quot;   light &quot; + lightReading + &quot;   button &quot; + (buttonDown ? 1 : 0) + &quot;   LED &quot; + ledColor().join(&quot;,&quot;), width / 2, height - 20);
+}
+
+// ---------- Serial helpers (based on the class p5-arduino examples) ----------
+
+// Create the serial port, reconnect if possible, and make the connect button
+function setupSerial() {
+  // Create a p5.webserial port object
+  port = createSerial();
+  // Get ports this page has used before (the browser remembers permission)
+  let usedPorts = usedSerialPorts();
+  // If there is one, reopen it automatically at our baud rate
+  if (usedPorts.length &gt; 0) port.open(usedPorts[0], BAUD_RATE);
+  // Make the button
+  connectBtn = createButton(&quot;Connect to Arduino&quot;);
+  // Put it in the top-left corner
+  connectBtn.position(20, 20);
+  // Run onConnectButtonClicked when it&#x27;s clicked
+  connectBtn.mouseClicked(onConnectButtonClicked);
+}
+
+// Update the button label and return whether the port is open
+function checkPort() {
+  // If the port isn&#x27;t open...
+  if (!port.opened()) {
+    // ...offer to connect
+    connectBtn.html(&quot;Connect to Arduino&quot;);
+    // Report that it&#x27;s closed
+    return false;
+  }
+  // The port is open, so offer to disconnect
+  connectBtn.html(&quot;Disconnect&quot;);
+  // Report that it&#x27;s open
+  return true;
+}
+
+// Open or close the serial port when the button is clicked
+function onConnectButtonClicked() {
+  // Forget the last color sent, so the current color is re-sent after connecting
+  lastSent = &quot;&quot;;
+  // If not connected, open the browser&#x27;s port picker at our baud rate
+  if (!port.opened()) port.open(BAUD_RATE);
+  // Otherwise close the connection
+  else port.close();
+}
+
+// Keep the canvas the size of the window if it&#x27;s resized
+function windowResized() {
+  // Resize the canvas to the new window size
+  resizeCanvas(windowWidth, windowHeight);
+}
+</code></pre>
+
+<h2>Collaboration and AI use</h2>
+<p><strong>Collaboration:</strong> I did not collaborate with any classmates.</p>
+<p><strong>AI use:</strong> I used Claude for these parts of the assignment:</p>
+<ul>
+  <li><strong>Code:</strong> Claude helped draft the Arduino firmware and the p5.js web page code, including the line-by-line comments, and helped me debug.</li>
+  <li><strong>Schematic:</strong> Claude redrew my schematic diagram to tidy it up.</li>
+  <li><strong>Calculations:</strong> Claude helped write up and check the calculations (LED resistors, the photoresistor voltage divider, joystick mapping and serial timing).</li>
+  <li><strong>Page and media:</strong> Claude formatted this page in HTML and converted my demo video into the GIF.</li>
+</ul>
+<p><strong>What I did myself:</strong> I built and wired the circuit, drew the circuit schematic, uploaded the firmware and tested it with the web page, measured my photoresistor readings (about 560 uncovered and 158 covered) to confirm the day/night thresholds, took the circuit photo and demo video, and checked that my schematic, circuit and code all match.</p>
+
+</body>
+</html>

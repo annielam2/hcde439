@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 600" width="920" height="600" xmlns:c2pa="http://c2pa.org/manifest">
+<defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#222"/></marker></defs>
+<rect width="920" height="600" fill="#fff"/>
+<text x="460.0" y="30" font-size="18" text-anchor="middle" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">A6 Firefly Jar — schematic</text>
+<rect x="380" y="70" width="170" height="450" rx="8" fill="#e8f1fa" stroke="#1f4e79" stroke-width="2.5"/>
+<text x="465.0" y="287.0" font-size="18" text-anchor="middle" font-weight="bold" fill="#1f4e79" font-family="Helvetica,Arial,sans-serif">Arduino</text>
+<text x="465.0" y="309.0" font-size="15" text-anchor="middle" font-weight="normal" fill="#1f4e79" font-family="Helvetica,Arial,sans-serif">Uno R3</text>
+<text x="388" y="115" font-size="13" text-anchor="start" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">5V</text>
+<circle cx="380" cy="110" r="4" fill="#222"/>
+<text x="388" y="155" font-size="13" text-anchor="start" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">GND</text>
+<circle cx="380" cy="150" r="4" fill="#222"/>
+<text x="388" y="195" font-size="13" text-anchor="start" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">D2</text>
+<circle cx="380" cy="190" r="4" fill="#222"/>
+<text x="388" y="235" font-size="13" text-anchor="start" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">A0</text>
+<circle cx="380" cy="230" r="4" fill="#222"/>
+<text x="388" y="275" font-size="13" text-anchor="start" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">A1</text>
+<circle cx="380" cy="270" r="4" fill="#222"/>
+<text x="388" y="425" font-size="13" text-anchor="start" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">A2</text>
+<circle cx="380" cy="420" r="4" fill="#222"/>
+<text x="542" y="205" font-size="13" text-anchor="end" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">D9 ~</text>
+<circle cx="550" cy="200" r="4" fill="#222"/>
+<text x="542" y="265" font-size="13" text-anchor="end" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">D10 ~</text>
+<circle cx="550" cy="260" r="4" fill="#222"/>
+<text x="542" y="325" font-size="13" text-anchor="end" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">D11 ~</text>
+<circle cx="550" cy="320" r="4" fill="#222"/>
+<rect x="70" y="85" width="130" height="210" rx="8" fill="#f4f4f4" stroke="#222" stroke-width="2"/>
+<text x="125.0" y="259" font-size="15" text-anchor="middle" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">Joystick</text>
+<text x="125.0" y="277" font-size="13" text-anchor="middle" font-weight="normal" fill="#222" font-family="Helvetica,Arial,sans-serif">module</text>
+<text x="192" y="115" font-size="12" text-anchor="end" font-weight="normal" fill="#222" font-family="Helvetica,Arial,sans-serif">+5V</text>
+<circle cx="200" cy="110" r="4" fill="#222"/>
+<text x="192" y="155" font-size="12" text-anchor="end" font-weight="normal" fill="#222" font-family="Helvetica,Arial,sans-serif">GND</text>
+<circle cx="200" cy="150" r="4" fill="#222"/>
+<text x="192" y="195" font-size="12" text-anchor="end" font-weight="normal" fill="#222" font-family="Helvetica,Arial,sans-serif">SW</text>
+<circle cx="200" cy="190" r="4" fill="#222"/>
+<text x="192" y="235" font-size="12" text-anchor="end" font-weight="normal" fill="#222" font-family="Helvetica,Arial,sans-serif">VRx</text>
+<circle cx="200" cy="230" r="4" fill="#222"/>
+<text x="192" y="275" font-size="12" text-anchor="end" font-weight="normal" fill="#222" font-family="Helvetica,Arial,sans-serif">VRy</text>
+<circle cx="200" cy="270" r="4" fill="#222"/>
+<line x1="200" y1="110" x2="380" y2="110" stroke="#222" stroke-width="2"/>
+<line x1="200" y1="150" x2="380" y2="150" stroke="#222" stroke-width="2"/>
+<line x1="200" y1="190" x2="380" y2="190" stroke="#222" stroke-width="2"/>
+<line x1="200" y1="230" x2="380" y2="230" stroke="#222" stroke-width="2"/>
+<line x1="200" y1="270" x2="380" y2="270" stroke="#222" stroke-width="2"/>
+<text x="290" y="184" font-size="11" text-anchor="middle" font-weight="normal" fill="#555" font-family="Helvetica,Arial,sans-serif">INPUT_PULLUP (internal ~35k)</text>
+<line x1="280" y1="300" x2="300" y2="300" stroke="#222" stroke-width="2"/>
+<text x="290" y="294" font-size="13" text-anchor="middle" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">+5V</text>
+<line x1="290" y1="300" x2="290" y2="318" stroke="#222" stroke-width="2"/>
+<circle cx="290" cy="352" r="26" fill="none" stroke="#222" stroke-width="1.5"/>
+<polyline fill="none" stroke="#222" stroke-width="2" points="290.0,318.0 283.0,326.5 297.0,335.0 283.0,343.5 297.0,352.0 283.0,360.5 297.0,369.0 283.0,377.5 290.0,386.0"/>
+<line x1="242" y1="314" x2="260" y2="326" stroke="#222" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="242" y1="328" x2="260" y2="340" stroke="#222" stroke-width="1.5" marker-end="url(#ar)"/>
+<text x="324" y="348" font-size="12" text-anchor="start" font-weight="normal" fill="#222" font-family="Helvetica,Arial,sans-serif">Photo-</text>
+<text x="324" y="363" font-size="12" text-anchor="start" font-weight="normal" fill="#222" font-family="Helvetica,Arial,sans-serif">resistor</text>
+<line x1="290" y1="386" x2="290" y2="420" stroke="#222" stroke-width="2"/>
+<circle cx="290" cy="420" r="4" fill="#222"/>
+<line x1="290" y1="420" x2="380" y2="420" stroke="#222" stroke-width="2"/>
+<polyline fill="none" stroke="#222" stroke-width="2" points="290.0,440.0 283.0,447.5 297.0,455.0 283.0,462.5 297.0,470.0 283.0,477.5 297.0,485.0 283.0,492.5 290.0,500.0"/>
+<line x1="290" y1="420" x2="290" y2="440" stroke="#222" stroke-width="2"/>
+<line x1="290" y1="500" x2="290" y2="515" stroke="#222" stroke-width="2"/>
+<line x1="290" y1="515" x2="290" y2="523" stroke="#222" stroke-width="2"/>
+<line x1="278" y1="523" x2="302" y2="523" stroke="#222" stroke-width="2"/>
+<line x1="282" y1="528" x2="298" y2="528" stroke="#222" stroke-width="2"/>
+<line x1="286" y1="533" x2="294" y2="533" stroke="#222" stroke-width="2"/>
+<text x="306" y="476" font-size="13" text-anchor="start" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">10 kΩ</text>
+<text x="342" y="412" font-size="12" text-anchor="middle" font-weight="normal" fill="#555" font-family="Helvetica,Arial,sans-serif">Vout</text>
+<line x1="550" y1="200" x2="575" y2="200" stroke="#222" stroke-width="2"/>
+<polyline fill="none" stroke="#222" stroke-width="2" points="575.0,200.0 583.8,193.0 592.5,207.0 601.2,193.0 610.0,207.0 618.8,193.0 627.5,207.0 636.2,193.0 645.0,200.0"/>
+<line x1="645" y1="200" x2="700" y2="200" stroke="#222" stroke-width="2"/>
+<polygon points="700,188 700,212 722,200" fill="#e53935" stroke="#222" stroke-width="2"/>
+<line x1="722" y1="188" x2="722" y2="212" stroke="#222" stroke-width="2"/>
+<line x1="706" y1="184" x2="714" y2="174" stroke="#222" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="714" y1="184" x2="722" y2="174" stroke="#222" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="722" y1="200" x2="760" y2="200" stroke="#222" stroke-width="2"/>
+<text x="610" y="186" font-size="12" text-anchor="middle" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">220 Ω</text>
+<text x="690" y="224" font-size="13" text-anchor="middle" font-weight="bold" fill="#e53935" font-family="Helvetica,Arial,sans-serif">R</text>
+<line x1="550" y1="260" x2="575" y2="260" stroke="#222" stroke-width="2"/>
+<polyline fill="none" stroke="#222" stroke-width="2" points="575.0,260.0 583.8,253.0 592.5,267.0 601.2,253.0 610.0,267.0 618.8,253.0 627.5,267.0 636.2,253.0 645.0,260.0"/>
+<line x1="645" y1="260" x2="700" y2="260" stroke="#222" stroke-width="2"/>
+<polygon points="700,248 700,272 722,260" fill="#43a047" stroke="#222" stroke-width="2"/>
+<line x1="722" y1="248" x2="722" y2="272" stroke="#222" stroke-width="2"/>
+<line x1="706" y1="244" x2="714" y2="234" stroke="#222" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="714" y1="244" x2="722" y2="234" stroke="#222" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="722" y1="260" x2="760" y2="260" stroke="#222" stroke-width="2"/>
+<text x="610" y="246" font-size="12" text-anchor="middle" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">220 Ω</text>
+<text x="690" y="284" font-size="13" text-anchor="middle" font-weight="bold" fill="#43a047" font-family="Helvetica,Arial,sans-serif">G</text>
+<line x1="550" y1="320" x2="575" y2="320" stroke="#222" stroke-width="2"/>
+<polyline fill="none" stroke="#222" stroke-width="2" points="575.0,320.0 583.8,313.0 592.5,327.0 601.2,313.0 610.0,327.0 618.8,313.0 627.5,327.0 636.2,313.0 645.0,320.0"/>
+<line x1="645" y1="320" x2="700" y2="320" stroke="#222" stroke-width="2"/>
+<polygon points="700,308 700,332 722,320" fill="#1e88e5" stroke="#222" stroke-width="2"/>
+<line x1="722" y1="308" x2="722" y2="332" stroke="#222" stroke-width="2"/>
+<line x1="706" y1="304" x2="714" y2="294" stroke="#222" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="714" y1="304" x2="722" y2="294" stroke="#222" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="722" y1="320" x2="760" y2="320" stroke="#222" stroke-width="2"/>
+<text x="610" y="306" font-size="12" text-anchor="middle" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">220 Ω</text>
+<text x="690" y="344" font-size="13" text-anchor="middle" font-weight="bold" fill="#1e88e5" font-family="Helvetica,Arial,sans-serif">B</text>
+<line x1="760" y1="200" x2="760" y2="440" stroke="#222" stroke-width="2"/>
+<circle cx="760" cy="260" r="4" fill="#222"/>
+<line x1="760" y1="440" x2="760" y2="448" stroke="#222" stroke-width="2"/>
+<line x1="748" y1="448" x2="772" y2="448" stroke="#222" stroke-width="2"/>
+<line x1="752" y1="453" x2="768" y2="453" stroke="#222" stroke-width="2"/>
+<line x1="756" y1="458" x2="764" y2="458" stroke="#222" stroke-width="2"/>
+<rect x="680" y="160" width="110" height="190" rx="10" fill="none" stroke="#888" stroke-dasharray="6,4"/>
+<text x="735" y="372" font-size="13" text-anchor="middle" font-weight="bold" fill="#222" font-family="Helvetica,Arial,sans-serif">RGB LED</text>
+<text x="735" y="388" font-size="11" text-anchor="middle" font-weight="normal" fill="#222" font-family="Helvetica,Arial,sans-serif">(common cathode)</text>
+<text x="774" y="430" font-size="11" text-anchor="start" font-weight="normal" fill="#222" font-family="Helvetica,Arial,sans-serif">common −</text>
+<text x="460.0" y="578" font-size="13" text-anchor="middle" font-weight="normal" fill="#555" font-family="Helvetica,Arial,sans-serif">All ground symbols connect to the Arduino GND pin. ~ = PWM-capable pin.</text>
+<metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTphZDQ1OGVjZC02OGQ4LTRjNWYtOWZhOC05MWQwMWQyNzNiYjEAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaPt5dgS8RawPjVZew6V5llMAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDpiZmU1MmExOC1iOGU0LTQ5MDUtYjdlMS1mMTRlMTNmNDFlMDRscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNovH94jQ/ZLcPg5Y2MT08VmwAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggo6amBC76RRP5EXEIX+eJ85KUVD9gXzY4nWgXBh32586kZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaDItdYz6bAYV+omqKjwKUkQAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRMAAAAAAAAAAAAAAAAZGhhc2hYIPrt9I4r8hzic8s+BtqogMePprIVFpHER3azJtoNN/XkZG5hbWVuanVtYmYgbWFuaWZlc3RqZXhjbHVzaW9uc4GiZXN0YXJ0GSqoZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOmFkNDU4ZWNkLTY4ZDgtNGM1Zi05ZmE4LTkxZDAxZDI3M2JiMS9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOjZjOTY0M2RhLWMxMzQtNGUxZS05YzcyLTk5MmY4YjA0OTRjN3JjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCCjpqYELvpFE/kRcQhf54nzkpRUP2BfNjidaBcGHfbnzqJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggFLSwBnSl2x9lUQ0ZJr9Vcr0BO8ah28ZEGbryP+dP6xCiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFggH7Kt9feP5H7bsk/l7uQk48X09LGMqId2XU6TLOkOvzB0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQDpHNhfF3a/JqytXfyQaBjG0kWRfFRm8XKX2DBYZkUh3ca1pXK8LizU7ngiofXJoCnOkl0yM+Vge+JZOHoHAR0s=</c2pa:manifest></metadata></svg>
