@@ -212,9 +212,10 @@ void loop() {
 <h2>Web page code (p5.js)</h2>
 <p>Files: <a href="a6-web/index.html">a6/index.html</a> and <a href="a6-web/sketch.js">a6-web/sketch.js</a>. <code>setup()</code> runs once to create the canvas, serial port and stars; <code>draw()</code> runs about 60 times a second to read the Arduino, update the game and send the LED color. The serial helper functions at the bottom (<code>setupSerial</code>, <code>checkPort</code>, <code>onConnectButtonClicked</code>) follow the structure of the class p5-arduino examples; the game, interaction design and messaging are my own.</p>
 <h3>index.html</h3>
-<pre><code>&lt;!DOCTYPE html&gt;
-&lt;!-- Tell the browser this file is HTML --&gt;
-&lt;html lang=&quot;en&quot;&gt;
+<pre><code>&lt;!-- Tell the browser this file is HTML --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;!-- Start the page, written in English --&gt;
+&lt;html lang="en"&gt;
   &lt;!-- The head holds settings and the scripts the page needs --&gt;
   &lt;head&gt;
     &lt;!-- Use UTF-8 text encoding --&gt;
